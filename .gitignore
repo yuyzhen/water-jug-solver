@@ -1,0 +1,4 @@
+preview*.png
+tools/
+chrome-test-profile/
+*.log

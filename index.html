@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>148升倒水挑战</title>
+  <style>
+    :root {
+      --ink: #f8fbff;
+      --muted: rgba(248, 251, 255, .72);
+      --line: rgba(150, 219, 255, .42);
+      --cyan: #3cd7ff;
+      --gold: #ffd34f;
+      --rose: #ff6d98;
+      --water: #21c9ff;
+      --deep: #081031;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow: hidden;
+      font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 28% 18%, rgba(73, 44, 146, .5), transparent 38%),
+        radial-gradient(circle at 78% 36%, rgba(23, 135, 170, .18), transparent 32%),
+        linear-gradient(180deg, #231067 0%, #15104b 44%, #071033 100%);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .48;
+      background-image:
+        radial-gradient(circle, rgba(255,255,255,.56) 0 1px, transparent 2px),
+        radial-gradient(circle, rgba(61,215,255,.7) 0 1px, transparent 2px);
+      background-size: 92px 108px, 143px 121px;
+      background-position: 14px 24px, 58px 71px;
+      mask-image: linear-gradient(180deg, #000 0 68%, transparent);
+    }
+
+    .game {
+      position: relative;
+      width: min(100vw, 980px);
+      height: 100vh;
+      min-height: 680px;
+      margin: 0 auto;
+      padding: 22px clamp(16px, 4vw, 44px) 28px;
+      display: grid;
+      grid-template-rows: auto minmax(150px, 24vh) 1fr auto;
+      gap: 12px;
+    }
+
+    header {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(24px, 4.5vw, 46px);
+      line-height: 1;
+      color: #fff7b8;
+      text-shadow: 0 5px 0 rgba(0,0,0,.22), 0 0 24px rgba(255, 211, 79, .35);
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: clamp(13px, 1.8vw, 16px);
+      line-height: 1.55;
+      max-width: 620px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid rgba(255,255,255,.22);
+      color: white;
+      background: rgba(255,255,255,.09);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 12px 25px rgba(0,0,0,.16);
+    }
+
+    button:hover { background: rgba(255,255,255,.16); }
+
+    .lake {
+      position: relative;
+      align-self: stretch;
+      border: 1px solid rgba(93, 224, 255, .25);
+      border-radius: 0 0 46% 46% / 0 0 42% 42%;
+      overflow: hidden;
+      cursor: pointer;
+      box-shadow: inset 0 -18px 48px rgba(5,42,91,.62), 0 22px 45px rgba(0,0,0,.18);
+      background:
+        radial-gradient(ellipse at 50% 105%, rgba(255,255,255,.4), transparent 18%),
+        linear-gradient(180deg, rgba(47, 197, 255, .72), rgba(9, 95, 172, .8) 54%, rgba(4, 33, 92, .94));
+    }
+
+    .lake::before,
+    .lake::after {
+      content: "";
+      position: absolute;
+      left: -8%;
+      right: -8%;
+      height: 42px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.25);
+      animation: wave 4.8s ease-in-out infinite;
+    }
+
+    .lake::before { top: 26px; }
+    .lake::after { top: 58px; opacity: .24; animation-delay: -1.7s; }
+
+    .lake-label {
+      position: absolute;
+      left: 24px;
+      bottom: 18px;
+      color: rgba(255,255,255,.82);
+      font-weight: 800;
+      text-shadow: 0 2px 12px rgba(0,0,0,.36);
+    }
+
+    .bottle-row {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(105px, 1fr));
+      align-items: end;
+      justify-items: center;
+      gap: clamp(14px, 4vw, 46px);
+      padding: 22px 0 8px;
+    }
+
+    .bucket {
+      --level: 0%;
+      --fill: #28caff;
+      position: relative;
+      width: clamp(104px, 20vw, 168px);
+      height: clamp(310px, 48vh, 445px);
+      border: 0;
+      background: transparent;
+      padding: 0;
+      transform: translateY(0);
+      transition: transform .24s ease, filter .24s ease;
+      cursor: pointer;
+      outline: none;
+      box-shadow: none;
+    }
+
+    .bucket:hover { filter: brightness(1.09); }
+    .bucket.selected { transform: translateY(-22px); filter: drop-shadow(0 0 22px rgba(73, 222, 255, .72)); }
+    .bucket.tilting-left .bottle-wrap { animation: tiltLeft 1.18s cubic-bezier(.2, .8, .2, 1); }
+    .bucket.tilting-right .bottle-wrap { animation: tiltRight 1.18s cubic-bezier(.2, .8, .2, 1); }
+    .bucket.tilting-left .liquid { animation: pourSloshLeft 1.18s ease-in-out; }
+    .bucket.tilting-right .liquid { animation: pourSloshRight 1.18s ease-in-out; }
+    .bucket.receiving .liquid { animation: slosh 1.05s ease-in-out; }
+
+    .bottle-wrap {
+      position: absolute;
+      inset: 0;
+      transform-origin: 50% 17%;
+    }
+
+    .liquid-zone {
+      position: absolute;
+      left: 18%;
+      right: 18%;
+      bottom: 8%;
+      height: 78%;
+      overflow: hidden;
+      border-radius: 32% 32% 18% 18% / 11% 11% 8% 8%;
+      filter: saturate(1.2);
+    }
+
+    .liquid {
+      position: absolute;
+      left: -12%;
+      right: -12%;
+      bottom: 0;
+      height: var(--level);
+      min-height: 0;
+      background:
+        radial-gradient(circle at 70% 18%, rgba(255,255,255,.48), transparent 11%),
+        linear-gradient(90deg, rgba(255,255,255,.22), transparent 22% 72%, rgba(0,0,0,.15)),
+        linear-gradient(180deg, color-mix(in srgb, var(--fill), white 24%), var(--fill));
+      border-radius: 45% 45% 9% 9% / 9% 9% 4% 4%;
+      transition: height .72s cubic-bezier(.19, 1, .22, 1);
+      transition-delay: 0s;
+      box-shadow: inset 0 14px 20px rgba(255,255,255,.22), inset 0 -18px 18px rgba(0,0,0,.14);
+    }
+
+    .bucket.tilting-left .liquid,
+    .bucket.tilting-right .liquid,
+    .bucket.receiving .liquid {
+      transition-delay: .24s;
+      transition-duration: .86s;
+    }
+
+    .liquid::before {
+      content: "";
+      position: absolute;
+      left: -16%;
+      right: -16%;
+      top: -9px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.28);
+      animation: bob 2.2s ease-in-out infinite;
+    }
+
+    .bottle-art {
+      position: absolute;
+      inset: 0;
+      background: url("assets/bottle.png") center / contain no-repeat;
+      filter: drop-shadow(0 16px 18px rgba(0,0,0,.35));
+      pointer-events: none;
+    }
+
+    .bottle-shine {
+      position: absolute;
+      inset: 4% 12% 3%;
+      border-radius: 28px 28px 22px 22px;
+      border: 3px solid rgba(83, 215, 255, .62);
+      box-shadow:
+        inset 7px 0 0 rgba(23, 113, 203, .32),
+        inset -5px 0 0 rgba(255,255,255,.28),
+        0 0 0 2px rgba(4, 30, 86, .28);
+      mask-image: linear-gradient(180deg, transparent 0 12%, #000 14% 100%);
+      pointer-events: none;
+    }
+
+    .cap {
+      position: absolute;
+      top: 2.2%;
+      left: 37%;
+      width: 26%;
+      height: 7%;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #ffe783, #f39d1f 62%, #9f5a12);
+      box-shadow: inset 0 3px 0 rgba(255,255,255,.7), 0 3px 8px rgba(0,0,0,.35);
+      pointer-events: none;
+    }
+
+    .bucket-info {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -18px;
+      display: grid;
+      place-items: center;
+      gap: 2px;
+      pointer-events: none;
+      text-shadow: 0 3px 8px rgba(0,0,0,.75);
+    }
+
+    .amount {
+      font-size: clamp(22px, 3.4vw, 34px);
+      font-weight: 900;
+      color: #fff;
+    }
+
+    .capacity {
+      color: rgba(255,255,255,.78);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .pour-svg {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      overflow: visible;
+    }
+
+    .pour-path {
+      fill: none;
+      stroke: url(#pourGradient);
+      stroke-width: 11;
+      stroke-linecap: round;
+      stroke-dasharray: var(--path-len);
+      stroke-dashoffset: var(--path-len);
+      filter: drop-shadow(0 0 9px rgba(57, 218, 255, .85));
+      animation: streamDraw 1.05s ease-in-out forwards;
+    }
+
+    .pour-path.thin {
+      stroke-width: 5;
+      opacity: .72;
+      animation-delay: .08s;
+    }
+
+    .pour-drop {
+      fill: rgba(196, 246, 255, .95);
+      filter: drop-shadow(0 0 8px rgba(57, 218, 255, .75));
+      offset-path: path(var(--drop-path));
+      offset-distance: 0%;
+      animation: dropTravel .86s var(--delay) ease-in forwards;
+    }
+
+    .splash {
+      position: fixed;
+      z-index: 11;
+      left: var(--x);
+      top: var(--y);
+      width: 10px;
+      height: 10px;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+    }
+
+    .splash::before {
+      content: "";
+      position: absolute;
+      inset: -13px;
+      border: 3px solid rgba(183, 242, 255, .75);
+      border-radius: 50%;
+      transform: scale(.2);
+      animation: splashRing .7s ease-out forwards;
+    }
+
+    .splash span {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(206, 249, 255, .94);
+      transform: rotate(var(--a)) translateY(0);
+      animation: splashDrop .72s ease-out forwards;
+    }
+
+    .status {
+      position: relative;
+      z-index: 3;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+      padding: 12px 16px;
+      border-top: 1px solid rgba(255,255,255,.16);
+      color: rgba(255,255,255,.86);
+    }
+
+    .total {
+      font-size: clamp(22px, 4vw, 40px);
+      font-weight: 900;
+      color: var(--gold);
+      text-shadow: 0 4px 0 rgba(0,0,0,.22);
+    }
+
+    .message {
+      min-height: 24px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .win {
+      color: #fff1a8;
+      text-shadow: 0 0 18px rgba(255, 211, 79, .55);
+    }
+
+    @keyframes wave {
+      0%, 100% { transform: translateX(-2%) scaleX(1.04); }
+      50% { transform: translateX(4%) scaleX(.98); }
+    }
+
+    @keyframes bob {
+      0%, 100% { transform: translateX(-4%); }
+      50% { transform: translateX(5%); }
+    }
+
+    @keyframes slosh {
+      0%, 100% { transform: translateX(0) skewX(0deg); }
+      36% { transform: translateX(-5%) skewX(-7deg); }
+      68% { transform: translateX(4%) skewX(5deg); }
+    }
+
+    @keyframes pourSloshLeft {
+      0%, 100% { transform: translateX(0) skewX(0deg); border-radius: 45% 45% 9% 9% / 9% 9% 4% 4%; }
+      35%, 72% { transform: translateX(-10%) skewX(-18deg); border-radius: 18% 56% 9% 9% / 8% 15% 4% 4%; }
+    }
+
+    @keyframes pourSloshRight {
+      0%, 100% { transform: translateX(0) skewX(0deg); border-radius: 45% 45% 9% 9% / 9% 9% 4% 4%; }
+      35%, 72% { transform: translateX(10%) skewX(18deg); border-radius: 56% 18% 9% 9% / 15% 8% 4% 4%; }
+    }
+
+    @keyframes tiltLeft {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-16deg) translate(-8px, -8px); }
+      45%, 76% { transform: rotate(-54deg) translate(-30px, -22px); }
+    }
+
+    @keyframes tiltRight {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(16deg) translate(8px, -8px); }
+      45%, 76% { transform: rotate(54deg) translate(30px, -22px); }
+    }
+
+    @keyframes streamDraw {
+      0% { stroke-dashoffset: var(--path-len); opacity: 0; }
+      16% { opacity: 1; }
+      38%, 76% { stroke-dashoffset: 0; opacity: 1; }
+      100% { stroke-dashoffset: calc(var(--path-len) * -1); opacity: 0; }
+    }
+
+    @keyframes dropTravel {
+      0% { offset-distance: 0%; opacity: 0; transform: scale(.65); }
+      18%, 78% { opacity: 1; }
+      100% { offset-distance: 100%; opacity: 0; transform: scale(1.05); }
+    }
+
+    @keyframes splashRing {
+      0% { opacity: 0; transform: scale(.2); }
+      35% { opacity: .95; }
+      100% { opacity: 0; transform: scale(1.25); }
+    }
+
+    @keyframes splashDrop {
+      0% { opacity: .95; transform: rotate(var(--a)) translateY(0) scale(.7); }
+      100% { opacity: 0; transform: rotate(var(--a)) translateY(var(--d)) scale(.35); }
+    }
+
+    @media (max-width: 680px) {
+      body { overflow-y: auto; }
+      .game {
+        min-height: 760px;
+        height: auto;
+        grid-template-rows: auto 150px 420px auto;
+      }
+      header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .controls { justify-content: flex-start; }
+      .bottle-row { gap: 6px; }
+      .bucket {
+        width: min(29vw, 132px);
+        height: 342px;
+      }
+      .status { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="game" aria-label="148升倒水挑战">
+    <header>
+      <div>
+        <h1>148升倒水挑战</h1>
+        <p class="subtitle">用 38L、39L、75L 三个无刻度水桶，从湖里精确留下 148L 水。</p>
+      </div>
+      <div class="controls">
+        <button id="dumpBtn" type="button" disabled>倒回湖里</button>
+        <button id="undoBtn" type="button">撤销</button>
+        <button id="resetBtn" type="button">重来</button>
+      </div>
+    </header>
+
+    <section id="lake" class="lake" role="button" tabindex="0" aria-label="湖水">
+      <div class="lake-label">湖水</div>
+    </section>
+
+    <section id="bottleRow" class="bottle-row" aria-label="三个水桶"></section>
+
+    <section class="status">
+      <div>
+        <div class="message" id="message">点击水桶选中；点湖水装满，点其他水桶倒入，点“倒回湖里”清空选中的水桶。</div>
+        <div id="steps">步数：0</div>
+      </div>
+      <div class="total" id="total">0 / 148L</div>
+    </section>
+  </main>
+
+  <script>
+    const capacities = [38, 39, 75];
+    const colors = ["#58d42f", "#ff8f22", "#24c7ff"];
+    const target = 148;
+    const state = {
+      amounts: [0, 0, 0],
+      selected: null,
+      steps: 0,
+      history: []
+    };
+
+    const row = document.getElementById("bottleRow");
+    const lake = document.getElementById("lake");
+    const totalEl = document.getElementById("total");
+    const messageEl = document.getElementById("message");
+    const stepsEl = document.getElementById("steps");
+    const dumpBtn = document.getElementById("dumpBtn");
+
+    const bucketEls = capacities.map((capacity, index) => {
+      const button = document.createElement("button");
+      button.className = "bucket";
+      button.type = "button";
+      button.dataset.index = index;
+      button.style.setProperty("--fill", colors[index]);
+      button.innerHTML = `
+        <div class="bottle-wrap">
+          <div class="liquid-zone"><div class="liquid"></div></div>
+          <div class="bottle-art"></div>
+          <div class="bottle-shine"></div>
+          <div class="cap"></div>
+        </div>
+        <div class="bucket-info">
+          <div class="amount">0L</div>
+          <div class="capacity">${capacity}L 桶</div>
+        </div>
+      `;
+      button.addEventListener("click", () => handleBucket(index));
+      row.appendChild(button);
+      return button;
+    });
+
+    function bottleSvg(index) {
+      const clipId = `bottleClip${index}`;
+      const glassId = `glassGradient${index}`;
+      const bodyId = `bodyGradient${index}`;
+      const rimId = `rimGradient${index}`;
+      const liquidId = `liquidGradient${index}`;
+      const shineId = `shineGradient${index}`;
+      const glowId = `glassGlow${index}`;
+      return `
+        <svg class="bottle-svg" viewBox="0 0 240 360" aria-hidden="true">
+          <defs>
+            <filter id="${glowId}" x="-35%" y="-35%" width="170%" height="170%">
+              <feGaussianBlur stdDeviation="2.3" result="blur"/>
+              <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.15 0 0 0 0 0.72 0 0 0 0 1 0 0 0 .75 0"/>
+              <feMerge>
+                <feMergeNode/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+            <linearGradient id="${glassId}" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#39bfff" stop-opacity=".88"/>
+              <stop offset="10%" stop-color="#0e5bb9" stop-opacity=".92"/>
+              <stop offset="31%" stop-color="#c8f7ff" stop-opacity=".16"/>
+              <stop offset="54%" stop-color="#061239" stop-opacity=".36"/>
+              <stop offset="76%" stop-color="#e5fdff" stop-opacity=".34"/>
+              <stop offset="91%" stop-color="#1388e8" stop-opacity=".92"/>
+              <stop offset="100%" stop-color="#04317f" stop-opacity=".96"/>
+            </linearGradient>
+            <radialGradient id="${bodyId}" cx="50%" cy="38%" r="70%">
+              <stop offset="0%" stop-color="#ffffff" stop-opacity=".11"/>
+              <stop offset="38%" stop-color="#183b87" stop-opacity=".11"/>
+              <stop offset="74%" stop-color="#020929" stop-opacity=".3"/>
+              <stop offset="100%" stop-color="#02061b" stop-opacity=".55"/>
+            </linearGradient>
+            <linearGradient id="${rimId}" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#e9fdff"/>
+              <stop offset="28%" stop-color="#6bdfff"/>
+              <stop offset="58%" stop-color="#116cc5"/>
+              <stop offset="100%" stop-color="#02164e"/>
+            </linearGradient>
+            <linearGradient id="${liquidId}" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="color-mix(in srgb, var(--fill), white 38%)"/>
+              <stop offset="52%" stop-color="var(--fill)"/>
+              <stop offset="100%" stop-color="color-mix(in srgb, var(--fill), black 22%)"/>
+            </linearGradient>
+            <linearGradient id="${shineId}" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="white" stop-opacity="0"/>
+              <stop offset="55%" stop-color="white" stop-opacity=".05"/>
+              <stop offset="72%" stop-color="white" stop-opacity=".42"/>
+              <stop offset="82%" stop-color="white" stop-opacity=".18"/>
+              <stop offset="100%" stop-color="white" stop-opacity="0"/>
+            </linearGradient>
+            <clipPath id="${clipId}">
+              <path d="M46 137 C46 112 66 96 92 90 L96 72 L144 72 L148 90 C174 96 194 112 194 137 L194 286 C194 314 176 326 145 326 L95 326 C64 326 46 314 46 286 Z"/>
+            </clipPath>
+          </defs>
+
+          <ellipse cx="120" cy="329" rx="82" ry="15" fill="#000a2f" opacity=".68"/>
+          <ellipse cx="120" cy="323" rx="70" ry="11" fill="#1dd5ff" opacity=".16"/>
+
+          <rect x="96" y="51" width="48" height="48" rx="9" fill="url(#${glassId})" opacity=".84"/>
+          <path d="M98 56 L98 101 M142 56 L142 101" stroke="#7deaff" stroke-width="5" stroke-opacity=".22"/>
+          <ellipse cx="120" cy="51" rx="29" ry="8" fill="url(#${rimId})" opacity=".9"/>
+          <ellipse cx="120" cy="50" rx="21" ry="5.5" fill="#020a2c" opacity=".92"/>
+          <ellipse cx="120" cy="48" rx="18" ry="2.8" fill="#d9fdff" opacity=".28"/>
+          <ellipse cx="120" cy="76" rx="36" ry="19" fill="url(#${glassId})" opacity=".82"/>
+          <ellipse cx="120" cy="74" rx="24" ry="8.5" fill="#071846" opacity=".74"/>
+
+          <g clip-path="url(#${clipId})">
+            <rect class="liquid-fill" x="39" y="300" width="162" height="0" fill="url(#${liquidId})"/>
+            <ellipse class="liquid-surface" cx="120" cy="300" rx="74" ry="11" fill="#d7fcff" opacity=".78"/>
+            <circle cx="89" cy="218" r="3.5" fill="#ffffff" opacity=".16"/>
+            <circle cx="152" cy="254" r="4.3" fill="#ffffff" opacity=".2"/>
+            <circle cx="142" cy="189" r="2.8" fill="#ffffff" opacity=".12"/>
+          </g>
+
+          <path d="M46 137 C46 112 66 96 92 90 L96 72 L144 72 L148 90 C174 96 194 112 194 137 L194 286 C194 314 176 326 145 326 L95 326 C64 326 46 314 46 286 Z"
+            fill="url(#${bodyId})" stroke="url(#${glassId})" stroke-width="9" stroke-linejoin="round" filter="url(#${glowId})"/>
+          <path d="M58 140 C58 121 72 108 96 103 L100 87 L140 87 L144 103 C168 108 182 121 182 140 L182 281 C182 300 168 311 143 312 L97 312 C72 311 58 300 58 281 Z"
+            fill="none" stroke="#d8fbff" stroke-opacity=".35" stroke-width="3"/>
+          <path d="M63 306 C88 319 152 319 177 306" fill="none" stroke="#021a68" stroke-width="14" stroke-linecap="round" opacity=".72"/>
+          <path d="M70 301 C96 310 144 310 170 301" fill="none" stroke="#baf7ff" stroke-width="5" stroke-linecap="round" opacity=".45"/>
+          <path d="M151 111 C181 136 181 263 160 300" fill="none" stroke="url(#${shineId})" stroke-width="28" stroke-linecap="round" opacity=".9"/>
+          <path d="M73 137 C65 181 65 247 74 292" fill="none" stroke="#78eaff" stroke-width="5" stroke-linecap="round" opacity=".5"/>
+          <path d="M181 139 C190 190 190 249 181 292" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity=".22"/>
+          <path d="M68 130 C78 104 98 98 111 96" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" opacity=".12"/>
+        </svg>
+      `;
+    }
+
+    lake.addEventListener("click", fillFromLake);
+    lake.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        fillFromLake();
+      }
+    });
+
+    dumpBtn.addEventListener("click", dumpToLake);
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      state.amounts = [0, 0, 0];
+      state.selected = null;
+      state.steps = 0;
+      state.history = [];
+      setMessage("湖水已经归零，重新开始。");
+      render();
+    });
+
+    document.getElementById("undoBtn").addEventListener("click", () => {
+      const last = state.history.pop();
+      if (!last) {
+        setMessage("还没有可撤销的倒水步骤。");
+        return;
+      }
+      state.amounts = last.amounts;
+      state.selected = last.selected;
+      state.steps = last.steps;
+      setMessage("已撤销上一步。");
+      render();
+    });
+
+    function handleBucket(index) {
+      if (state.selected === null) {
+        state.selected = index;
+        setMessage(`${capacities[index]}L 桶已选中。`);
+        render();
+        return;
+      }
+
+      if (state.selected === index) {
+        state.selected = null;
+        setMessage("取消选中。");
+        render();
+        return;
+      }
+
+      pourToBucket(state.selected, index);
+    }
+
+    function dumpToLake() {
+      const index = state.selected;
+      if (index === null) {
+        setMessage("先选中一个要倒回湖里的水桶。");
+        return;
+      }
+      if (state.amounts[index] === 0) {
+        setMessage("选中的水桶是空的。");
+        return;
+      }
+
+      saveHistory();
+      const poured = state.amounts[index];
+      state.amounts[index] = 0;
+      state.steps += 1;
+      animatePour(index, "lake");
+      setMessage(`${capacities[index]}L 桶倒回湖里 ${poured}L。`);
+      state.selected = null;
+      renderSoon();
+    }
+
+    function fillFromLake() {
+      const index = state.selected;
+      if (index === null) {
+        setMessage("先选中一个水桶。");
+        return;
+      }
+      const need = capacities[index] - state.amounts[index];
+      if (need === 0) {
+        setMessage("这个水桶已经满了。");
+        return;
+      }
+      saveHistory();
+      state.amounts[index] = capacities[index];
+      state.steps += 1;
+      animateLakeFill(index);
+      setMessage(`从湖里装满 ${capacities[index]}L 桶，加入 ${need}L。`);
+      state.selected = null;
+      renderSoon();
+    }
+
+    function pourToBucket(from, to) {
+      const available = state.amounts[from];
+      const space = capacities[to] - state.amounts[to];
+      if (available === 0) {
+        setMessage("选中的水桶是空的。");
+        state.selected = to;
+        render();
+        return;
+      }
+      if (space === 0) {
+        setMessage("目标水桶已经满了。");
+        state.selected = to;
+        render();
+        return;
+      }
+
+      saveHistory();
+      const moved = Math.min(available, space);
+      state.amounts[from] -= moved;
+      state.amounts[to] += moved;
+      state.steps += 1;
+      animatePour(from, to);
+      setMessage(`${capacities[from]}L 桶向 ${capacities[to]}L 桶倒入 ${moved}L。`);
+      state.selected = null;
+      renderSoon();
+    }
+
+    function saveHistory() {
+      state.history.push({
+        amounts: [...state.amounts],
+        selected: state.selected,
+        steps: state.steps
+      });
+      if (state.history.length > 80) state.history.shift();
+    }
+
+    function renderSoon() {
+      render();
+      window.setTimeout(checkWin, 1180);
+    }
+
+    function render() {
+      bucketEls.forEach((el, index) => {
+        const amount = state.amounts[index];
+        const level = `${(amount / capacities[index]) * 100}%`;
+        el.style.setProperty("--level", level);
+        el.classList.toggle("selected", state.selected === index);
+        el.querySelector(".amount").textContent = `${amount}L`;
+        el.setAttribute("aria-label", `${capacities[index]}升水桶，当前${amount}升`);
+      });
+      const total = state.amounts.reduce((sum, value) => sum + value, 0);
+      totalEl.textContent = `${total} / ${target}L`;
+      totalEl.classList.toggle("win", total === target);
+      stepsEl.textContent = `步数：${state.steps}`;
+      dumpBtn.disabled = state.selected === null || state.amounts[state.selected] === 0;
+    }
+
+    function setMessage(text) {
+      messageEl.textContent = text;
+    }
+
+    function checkWin() {
+      const total = state.amounts.reduce((sum, value) => sum + value, 0);
+      if (total === target) {
+        setMessage(`完成：三个水桶中一共精确留下 ${target}L。`);
+      }
+    }
+
+    function animateLakeFill(to) {
+      const lakeBox = lake.getBoundingClientRect();
+      const targetBox = bucketEls[to].getBoundingClientRect();
+      addStream(
+        lakeBox.left + lakeBox.width * .5,
+        lakeBox.bottom - 18,
+        targetBox.left + targetBox.width * .5,
+        targetBox.top + targetBox.height * .24,
+        { arc: -120, splash: true }
+      );
+      pulse(to, "receiving");
+    }
+
+    function animatePour(from, to) {
+      const fromEl = bucketEls[from];
+      const fromBox = fromEl.getBoundingClientRect();
+      const directionClass = to === "lake"
+        ? "tilting-left"
+        : from < to ? "tilting-right" : "tilting-left";
+      const poursRight = directionClass === "tilting-right";
+      const mouth = {
+        x: fromBox.left + fromBox.width * (poursRight ? .72 : .28),
+        y: fromBox.top + fromBox.height * .16
+      };
+      pulse(from, directionClass);
+
+      if (to === "lake") {
+        const lakeBox = lake.getBoundingClientRect();
+        addStream(
+          mouth.x,
+          mouth.y,
+          lakeBox.left + lakeBox.width * .52,
+          lakeBox.bottom - 10,
+          { arc: -90, splash: true }
+        );
+        return;
+      }
+
+      const toBox = bucketEls[to].getBoundingClientRect();
+      pulse(to, "receiving");
+      addStream(
+        mouth.x,
+        mouth.y,
+        toBox.left + toBox.width * .5,
+        toBox.top + toBox.height * .24,
+        { arc: from < to ? -70 : 70, splash: true }
+      );
+    }
+
+    function pulse(index, className) {
+      const el = bucketEls[index];
+      el.classList.remove(className);
+      void el.offsetWidth;
+      el.classList.add(className);
+      window.setTimeout(() => el.classList.remove(className), 1240);
+    }
+
+    function addStream(x1, y1, x2, y2, options = {}) {
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const distance = Math.hypot(dx, dy);
+      const bend = options.arc ?? (dx > 0 ? -70 : 70);
+      const cx = (x1 + x2) / 2 + bend;
+      const cy = Math.min(y1, y2) - Math.max(44, distance * .18);
+      const path = `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.classList.add("pour-svg");
+      svg.setAttribute("width", window.innerWidth);
+      svg.setAttribute("height", window.innerHeight);
+      svg.setAttribute("viewBox", `0 0 ${window.innerWidth} ${window.innerHeight}`);
+      svg.innerHTML = `
+        <defs>
+          <linearGradient id="pourGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="rgba(238, 253, 255, .98)" />
+            <stop offset="42%" stop-color="rgba(81, 224, 255, .95)" />
+            <stop offset="100%" stop-color="rgba(24, 162, 255, .92)" />
+          </linearGradient>
+        </defs>
+        <path class="pour-path" d="${path}" />
+        <path class="pour-path thin" d="${path}" transform="translate(${dx > 0 ? -9 : 9}, 3)" />
+      `;
+      const mainPath = svg.querySelector(".pour-path");
+      document.body.appendChild(svg);
+      const pathLength = mainPath.getTotalLength();
+      svg.style.setProperty("--path-len", pathLength);
+
+      for (let i = 0; i < 8; i += 1) {
+        const drop = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        drop.classList.add("pour-drop");
+        drop.setAttribute("r", String(2.4 + (i % 3) * .9));
+        drop.style.setProperty("--drop-path", `"${path}"`);
+        drop.style.setProperty("--delay", `${.16 + i * .075}s`);
+        svg.appendChild(drop);
+      }
+
+      if (options.splash) addSplash(x2, y2);
+      window.setTimeout(() => svg.remove(), 1320);
+    }
+
+    function addSplash(x, y) {
+      const splash = document.createElement("div");
+      splash.className = "splash";
+      splash.style.setProperty("--x", `${x}px`);
+      splash.style.setProperty("--y", `${y}px`);
+      for (let i = 0; i < 9; i += 1) {
+        const drop = document.createElement("span");
+        drop.style.setProperty("--a", `${-70 + i * 17}deg`);
+        drop.style.setProperty("--d", `${16 + (i % 4) * 7}px`);
+        splash.appendChild(drop);
+      }
+      document.body.appendChild(splash);
+      window.setTimeout(() => splash.remove(), 900);
+    }
+
+    render();
+  </script>
+</body>
+</html>
