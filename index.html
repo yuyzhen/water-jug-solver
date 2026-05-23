@@ -447,6 +447,65 @@
       text-shadow: 0 0 18px rgba(255, 211, 79, .55);
     }
 
+    .win-modal {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(3, 8, 31, .42);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s ease;
+      backdrop-filter: blur(4px);
+    }
+
+    .win-modal.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .win-panel {
+      width: min(420px, 92vw);
+      border: 1px solid rgba(255, 238, 157, .46);
+      border-radius: 8px;
+      padding: 28px 26px 24px;
+      text-align: center;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255, 224, 96, .22), transparent 42%),
+        linear-gradient(180deg, rgba(30, 25, 86, .96), rgba(8, 16, 55, .96));
+      box-shadow: 0 30px 80px rgba(0,0,0,.42), 0 0 46px rgba(255, 211, 79, .18);
+      transform: translateY(12px) scale(.96);
+      transition: transform .25s ease;
+    }
+
+    .win-modal.open .win-panel {
+      transform: translateY(0) scale(1);
+    }
+
+    .win-kicker {
+      color: #8feaff;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0;
+      margin-bottom: 8px;
+    }
+
+    .win-panel h2 {
+      margin: 0;
+      color: #fff3a6;
+      font-size: clamp(30px, 5vw, 46px);
+      line-height: 1;
+      text-shadow: 0 4px 0 rgba(0,0,0,.26), 0 0 24px rgba(255, 211, 79, .35);
+    }
+
+    .win-panel p {
+      margin: 14px 0 20px;
+      color: rgba(255,255,255,.78);
+      line-height: 1.6;
+    }
+
     @keyframes wave {
       0%, 100% { transform: translateX(-3%) scaleX(1.06) translateY(0); }
       50% { transform: translateX(4%) scaleX(.98) translateY(5px); }
@@ -539,6 +598,7 @@
         <p class="subtitle">用 38L、39L、75L 三个无刻度水桶，从湖里精确留下 148L 水。</p>
       </div>
       <div class="controls">
+        <button id="hintBtn" type="button">提示</button>
         <button id="dumpBtn" type="button" disabled>倒回湖里</button>
         <button id="undoBtn" type="button">撤销</button>
         <button id="resetBtn" type="button">重来</button>
@@ -557,6 +617,15 @@
         <div id="steps">步数：0</div>
       </div>
       <div class="total" id="total">0 / 148L</div>
+    </section>
+
+    <section id="winModal" class="win-modal" aria-live="polite" aria-hidden="true">
+      <div class="win-panel">
+        <div class="win-kicker">挑战完成</div>
+        <h2>精确取得 148L</h2>
+        <p id="winText">三个水桶里的水量合计正好 148L。</p>
+        <button id="playAgainBtn" type="button">再玩一次</button>
+      </div>
     </section>
   </main>
 
@@ -577,6 +646,22 @@
     const messageEl = document.getElementById("message");
     const stepsEl = document.getElementById("steps");
     const dumpBtn = document.getElementById("dumpBtn");
+    const hintBtn = document.getElementById("hintBtn");
+    const winModal = document.getElementById("winModal");
+    const winText = document.getElementById("winText");
+    const playAgainBtn = document.getElementById("playAgainBtn");
+    const solutionHints = [
+      "推荐路径 1/9：装满 75L 桶。",
+      "推荐路径 2/9：75L 桶倒入 38L 桶，75L 桶剩 37L。",
+      "推荐路径 3/9：把 38L 桶倒回湖里。",
+      "推荐路径 4/9：75L 桶剩下的 37L 倒入 38L 桶。",
+      "推荐路径 5/9：再次装满 75L 桶。",
+      "推荐路径 6/9：75L 桶倒入 39L 桶，75L 桶剩 36L。",
+      "推荐路径 7/9：把 39L 桶倒回湖里。",
+      "推荐路径 8/9：75L 桶剩下的 36L 倒入 39L 桶。",
+      "推荐路径 9/9：最后装满 75L 桶，总量为 37 + 36 + 75 = 148L。"
+    ];
+    let hintIndex = 0;
 
     const bucketEls = capacities.map((capacity, index) => {
       const button = document.createElement("button");
@@ -700,15 +785,24 @@
     });
 
     dumpBtn.addEventListener("click", dumpToLake);
+    hintBtn.addEventListener("click", () => {
+      setMessage(solutionHints[hintIndex]);
+      hintIndex = (hintIndex + 1) % solutionHints.length;
+    });
+    playAgainBtn.addEventListener("click", resetGame);
 
-    document.getElementById("resetBtn").addEventListener("click", () => {
+    document.getElementById("resetBtn").addEventListener("click", resetGame);
+
+    function resetGame() {
       state.amounts = [0, 0, 0];
       state.selected = null;
       state.steps = 0;
       state.history = [];
+      hintIndex = 0;
+      hideWin();
       setMessage("湖水已经归零，重新开始。");
       render();
-    });
+    }
 
     document.getElementById("undoBtn").addEventListener("click", () => {
       const last = state.history.pop();
@@ -719,6 +813,7 @@
       state.amounts = last.amounts;
       state.selected = last.selected;
       state.steps = last.steps;
+      hideWin();
       setMessage("已撤销上一步。");
       render();
     });
@@ -847,7 +942,19 @@
       const total = state.amounts.reduce((sum, value) => sum + value, 0);
       if (total === target) {
         setMessage(`完成：三个水桶中一共精确留下 ${target}L。`);
+        showWin();
       }
+    }
+
+    function showWin() {
+      winText.textContent = `你用了 ${state.steps} 步完成挑战，三个水桶里的水量合计正好 ${target}L。`;
+      winModal.classList.add("open");
+      winModal.setAttribute("aria-hidden", "false");
+    }
+
+    function hideWin() {
+      winModal.classList.remove("open");
+      winModal.setAttribute("aria-hidden", "true");
     }
 
     function animateLakeFill(to) {
