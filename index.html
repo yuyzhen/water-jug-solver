@@ -221,19 +221,6 @@
       filter: drop-shadow(0 0 24px rgba(73, 222, 255, .8));
     }
     .bucket.selected::after { transform: translateY(22px) scale(.88); opacity: .56; }
-    .bucket.selected .bottle-wrap::after {
-      content: "";
-      position: absolute;
-      left: 8%;
-      right: 8%;
-      top: 12%;
-      bottom: 2%;
-      border-radius: 46px;
-      border: 2px solid rgba(119, 238, 255, .62);
-      box-shadow: 0 0 24px rgba(54, 222, 255, .55), inset 0 0 18px rgba(54, 222, 255, .16);
-      pointer-events: none;
-      animation: selectedGlow 1.5s ease-in-out infinite;
-    }
     .bucket.tilting-left .bottle-wrap { animation: tiltLeft 1.18s cubic-bezier(.2, .8, .2, 1); }
     .bucket.tilting-right .bottle-wrap { animation: tiltRight 1.18s cubic-bezier(.2, .8, .2, 1); }
     .bucket.tilting-left .liquid { animation: pourSloshLeft 1.18s ease-in-out; }
@@ -521,11 +508,6 @@
     @keyframes splashDrop {
       0% { opacity: .95; transform: rotate(var(--a)) translateY(0) scale(.7); }
       100% { opacity: 0; transform: rotate(var(--a)) translateY(var(--d)) scale(.35); }
-    }
-
-    @keyframes selectedGlow {
-      0%, 100% { opacity: .56; transform: scale(.98); }
-      50% { opacity: .92; transform: scale(1.03); }
     }
 
     @media (max-width: 680px) {
