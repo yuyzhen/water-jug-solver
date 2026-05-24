@@ -506,6 +506,37 @@
       line-height: 1.6;
     }
 
+    .fireworks {
+      position: fixed;
+      inset: 0;
+      z-index: 24;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .firework {
+      position: absolute;
+      left: var(--x);
+      top: var(--y);
+      width: 8px;
+      height: 8px;
+      transform: translate(-50%, -50%);
+    }
+
+    .firework i {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 5px;
+      height: 14px;
+      border-radius: 999px;
+      background: var(--c);
+      box-shadow: 0 0 12px var(--c);
+      transform: translate(-50%, -50%) rotate(var(--a));
+      animation: firework .98s cubic-bezier(.08, .76, .22, 1) forwards;
+      animation-delay: var(--delay);
+    }
+
     @keyframes wave {
       0%, 100% { transform: translateX(-3%) scaleX(1.06) translateY(0); }
       50% { transform: translateX(4%) scaleX(.98) translateY(5px); }
@@ -521,6 +552,18 @@
       24% { transform: translateX(-7%) skewX(-8deg); }
       52% { transform: translateX(6%) skewX(7deg); }
       78% { transform: translateX(-3%) skewX(-4deg); }
+    }
+
+    @keyframes firework {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(var(--a)) translateY(0) scale(.25);
+      }
+      14% { opacity: 1; }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(var(--a)) translateY(var(--r)) scale(.95);
+      }
     }
 
     @keyframes pourSloshLeft {
@@ -598,9 +641,9 @@
         <p class="subtitle">用 38L、39L、75L 三个无刻度水桶，从湖里精确留下 148L 水。</p>
       </div>
       <div class="controls">
-        <button id="hintBtn" type="button">提示</button>
         <button id="dumpBtn" type="button" disabled>倒回湖里</button>
         <button id="undoBtn" type="button">撤销</button>
+        <button id="hintBtn" type="button">提示</button>
         <button id="resetBtn" type="button">重来</button>
       </div>
     </header>
@@ -637,7 +680,8 @@
       amounts: [0, 0, 0],
       selected: null,
       steps: 0,
-      history: []
+      history: [],
+      won: false
     };
 
     const row = document.getElementById("bottleRow");
@@ -807,6 +851,7 @@
       state.selected = null;
       state.steps = 0;
       state.history = [];
+      state.won = false;
       hintIndex = 0;
       hideWin();
       setMessage("湖水已经归零，重新开始。");
@@ -822,6 +867,7 @@
       state.amounts = last.amounts;
       state.selected = last.selected;
       state.steps = last.steps;
+      state.won = false;
       hideWin();
       setMessage("已撤销上一步。");
       render();
@@ -949,7 +995,8 @@
 
     function checkWin() {
       const total = state.amounts.reduce((sum, value) => sum + value, 0);
-      if (total === target) {
+      if (total === target && !state.won) {
+        state.won = true;
         setMessage(`完成：三个水桶中一共精确留下 ${target}L。`);
         showWin();
       }
@@ -959,11 +1006,47 @@
       winText.textContent = `你用了 ${state.steps} 步完成挑战，三个水桶里的水量合计正好 ${target}L。`;
       winModal.classList.add("open");
       winModal.setAttribute("aria-hidden", "false");
+      launchFireworks();
     }
 
     function hideWin() {
       winModal.classList.remove("open");
       winModal.setAttribute("aria-hidden", "true");
+    }
+
+    function launchFireworks() {
+      document.querySelectorAll(".fireworks").forEach((node) => node.remove());
+      const layer = document.createElement("div");
+      layer.className = "fireworks";
+      const palette = ["#ffd34f", "#8feaff", "#ff6d98", "#9cff55", "#ffffff"];
+      const bursts = [
+        { x: 24, y: 26, delay: 0 },
+        { x: 72, y: 22, delay: .12 },
+        { x: 52, y: 36, delay: .24 },
+        { x: 34, y: 46, delay: .36 },
+        { x: 82, y: 42, delay: .48 }
+      ];
+
+      bursts.forEach((burst, burstIndex) => {
+        const firework = document.createElement("div");
+        firework.className = "firework";
+        firework.style.setProperty("--x", `${burst.x}vw`);
+        firework.style.setProperty("--y", `${burst.y}vh`);
+
+        for (let i = 0; i < 18; i += 1) {
+          const spark = document.createElement("i");
+          spark.style.setProperty("--a", `${i * 20}deg`);
+          spark.style.setProperty("--r", `${72 + (i % 4) * 10}px`);
+          spark.style.setProperty("--c", palette[(i + burstIndex) % palette.length]);
+          spark.style.setProperty("--delay", `${burst.delay}s`);
+          firework.appendChild(spark);
+        }
+
+        layer.appendChild(firework);
+      });
+
+      document.body.appendChild(layer);
+      window.setTimeout(() => layer.remove(), 1900);
     }
 
     function animateLakeFill(to) {
