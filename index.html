@@ -552,15 +552,15 @@
     }
 
     @keyframes tiltLeft {
-      0%, 100% { transform: rotate(0deg); }
-      18% { transform: rotate(-12deg) translate(-6px, -7px); }
-      36%, 72% { transform: rotate(-52deg) translate(-30px, -22px); }
+      0%, 100% { transform: translateX(-50%) rotate(0deg); }
+      18% { transform: translateX(-50%) rotate(-12deg); }
+      36%, 72% { transform: translateX(-50%) rotate(-52deg); }
     }
 
     @keyframes tiltRight {
-      0%, 100% { transform: rotate(0deg); }
-      18% { transform: rotate(12deg) translate(6px, -7px); }
-      36%, 72% { transform: rotate(52deg) translate(30px, -22px); }
+      0%, 100% { transform: translateX(-50%) rotate(0deg); }
+      18% { transform: translateX(-50%) rotate(12deg); }
+      36%, 72% { transform: translateX(-50%) rotate(52deg); }
     }
 
     @keyframes streamDraw {
