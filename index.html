@@ -44,6 +44,22 @@
       background-size: 104px 116px, 157px 131px;
       background-position: 14px 24px, 58px 71px;
       mask-image: linear-gradient(180deg, #000 0 68%, transparent);
+      animation: starDrift 24s linear infinite;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: -18%;
+      pointer-events: none;
+      opacity: .46;
+      background:
+        radial-gradient(ellipse at 22% 28%, rgba(81, 115, 255, .28), transparent 34%),
+        radial-gradient(ellipse at 76% 34%, rgba(28, 219, 255, .2), transparent 32%),
+        radial-gradient(ellipse at 48% 76%, rgba(118, 69, 255, .18), transparent 42%);
+      filter: blur(24px);
+      transform: translate3d(0, 0, 0) scale(1);
+      animation: nebulaFloat 18s ease-in-out infinite alternate;
     }
 
     .game {
@@ -72,6 +88,17 @@
       pointer-events: none;
       z-index: 0;
       filter: blur(.2px);
+    }
+
+    @keyframes starDrift {
+      from { background-position: 14px 24px, 58px 71px; }
+      to { background-position: 118px 140px, -99px 202px; }
+    }
+
+    @keyframes nebulaFloat {
+      0% { transform: translate3d(-1.8%, -1%, 0) scale(1); opacity: .38; }
+      52% { transform: translate3d(1.2%, .8%, 0) scale(1.04); opacity: .5; }
+      100% { transform: translate3d(-.4%, 1.6%, 0) scale(1.02); opacity: .43; }
     }
 
     header {
@@ -904,7 +931,7 @@
           <div class="liquid-pixi" data-liquid-index="${index}" aria-hidden="true"></div>
         </div>
         <div class="bucket-info">
-          <div class="amount">0L/${capacity}L</div>
+          <div class="amount">0/${capacity}L</div>
         </div>
       `;
       button.addEventListener("click", () => handleBucket(index));
@@ -1570,7 +1597,7 @@
         surface.setAttribute("cy", surfaceY.toFixed(2));
         surface.setAttribute("rx", String(surfaceRadius));
         surface.setAttribute("opacity", amount === 0 ? ".18" : ".78");
-        el.querySelector(".amount").textContent = `${amount}L/${capacities[index]}L`;
+        el.querySelector(".amount").textContent = `${amount}/${capacities[index]}L`;
         el.setAttribute("aria-label", `${capacities[index]}升水桶，当前${amount}升`);
       });
       const total = state.amounts.reduce((sum, value) => sum + value, 0);
