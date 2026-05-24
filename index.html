@@ -186,6 +186,21 @@
         linear-gradient(180deg, rgba(31, 175, 255, .92), rgba(15, 92, 216, .72) 40%, rgba(4, 21, 92, .96));
     }
 
+    .lake-pixi {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      border-radius: inherit;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .lake-pixi canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
     .lake::before,
     .lake::after {
       content: "";
@@ -205,8 +220,14 @@
     .lake::before { top: 32px; }
     .lake::after { top: 48px; opacity: .34; animation-delay: -1.7s; }
 
+    .lake.pixi-ready::before,
+    .lake.pixi-ready::after {
+      opacity: 0;
+    }
+
     .lake-progress {
       position: absolute;
+      z-index: 3;
       right: clamp(18px, 4vw, 42px);
       top: 50%;
       transform: translateY(-46%);
@@ -240,6 +261,7 @@
 
     .lake-label {
       position: absolute;
+      z-index: 3;
       left: 24px;
       top: 18px;
       bottom: auto;
@@ -863,6 +885,7 @@
     </header>
 
     <section id="lake" class="lake" role="button" tabindex="0" aria-label="湖水">
+      <div id="lakePixi" class="lake-pixi" aria-hidden="true"></div>
       <div class="lake-label">湖水</div>
       <div class="lake-progress" aria-hidden="true">
         <strong><span id="lakeTotal">0</span> / <span>148L</span></strong>
@@ -892,6 +915,7 @@
     </section>
   </main>
 
+  <script src="https://pixijs.download/release/pixi.min.js"></script>
   <script>
     const capacities = [38, 39, 75];
     const colors = ["#58d42f", "#ff8f22", "#24c7ff"];
@@ -910,6 +934,7 @@
 
     const row = document.getElementById("bottleRow");
     const lake = document.getElementById("lake");
+    const lakePixiHost = document.getElementById("lakePixi");
     const lakeTotalEl = document.getElementById("lakeTotal");
     const lakeHintEl = document.getElementById("lakeHint");
     const totalEl = document.getElementById("total");
@@ -920,6 +945,7 @@
     const winModal = document.getElementById("winModal");
     const winText = document.getElementById("winText");
     const playAgainBtn = document.getElementById("playAgainBtn");
+    let lakePixi = null;
     const solutionHints = [
       "推荐路径 1/9：装满 75L 桶。",
       "推荐路径 2/9：75L 桶倒入 38L 桶，75L 桶剩 37L。",
@@ -1276,6 +1302,123 @@
       });
     }
 
+    async function initLakePixi() {
+      if (!window.PIXI || !lakePixiHost) return;
+
+      const app = new PIXI.Application();
+      try {
+        await app.init({
+          resizeTo: lake,
+          backgroundAlpha: 0,
+          antialias: true,
+          autoDensity: true,
+          resolution: Math.min(window.devicePixelRatio || 1, 2)
+        });
+      } catch (error) {
+        console.warn("PixiJS lake renderer failed to initialize.", error);
+        return;
+      }
+
+      lakePixiHost.appendChild(app.canvas);
+      lake.classList.add("pixi-ready");
+
+      const deep = new PIXI.Graphics();
+      const glow = new PIXI.Graphics();
+      const body = new PIXI.Graphics();
+      const surface = new PIXI.Graphics();
+      const highlight = new PIXI.Graphics();
+      const bubbles = Array.from({ length: 22 }, (_, index) => ({
+        x: Math.random(),
+        y: Math.random(),
+        r: 1.4 + Math.random() * 3.2,
+        speed: .045 + Math.random() * .07,
+        drift: Math.random() * Math.PI * 2,
+        delay: index * .37
+      }));
+      const bubbleGraphics = new PIXI.Graphics();
+
+      app.stage.addChild(deep, glow, body, surface, highlight, bubbleGraphics);
+
+      const pixiState = {
+        app,
+        progress: 0,
+        targetProgress: 0
+      };
+
+      function drawWave(graphics, time, y, amplitude, length, color, alpha, thickness, phase) {
+        const width = app.renderer.width;
+        const points = [];
+        for (let x = -24; x <= width + 24; x += 18) {
+          const waveY = y
+            + Math.sin((x / length) + time + phase) * amplitude
+            + Math.sin((x / (length * .58)) - time * 1.35 + phase) * amplitude * .34;
+          points.push([x, waveY]);
+        }
+
+        graphics.moveTo(points[0][0], points[0][1]);
+        for (let i = 1; i < points.length; i += 1) {
+          const prev = points[i - 1];
+          const point = points[i];
+          graphics.quadraticCurveTo(prev[0], prev[1], (prev[0] + point[0]) / 2, (prev[1] + point[1]) / 2);
+        }
+        graphics.stroke({ width: thickness, color, alpha, cap: "round", join: "round" });
+      }
+
+      function renderLake() {
+        const width = app.renderer.width;
+        const height = app.renderer.height;
+        const time = performance.now() / 1000;
+        pixiState.progress += (pixiState.targetProgress - pixiState.progress) * .045;
+        const progressWidth = width * pixiState.progress;
+
+        deep.clear();
+        deep.rect(0, 0, width, height).fill({ color: 0x021347, alpha: .88 });
+        deep.rect(0, 0, width, Math.max(30, height * .42)).fill({ color: 0x158fe8, alpha: .5 });
+        deep.ellipse(width * .5, height * .02, width * .56, height * .34).fill({ color: 0xcffbff, alpha: .2 });
+        deep.ellipse(width * .72, height * .58, width * .22, height * .18).fill({ color: 0x2ce4ff, alpha: .12 });
+
+        glow.clear();
+        if (progressWidth > 2) {
+          glow.roundRect(0, 0, progressWidth, height, 18).fill({ color: 0x245fff, alpha: .14 });
+          glow.rect(0, height * .58, progressWidth, height * .42).fill({ color: 0x16d7ff, alpha: .09 });
+        }
+
+        body.clear();
+        body.rect(0, height * .36, width, height * .64).fill({ color: 0x05276f, alpha: .5 });
+        body.rect(0, height * .5, width, height * .5).fill({ color: 0x011047, alpha: .46 });
+
+        surface.clear();
+        drawWave(surface, time * 1.8, height * .34, 5.5, 96, 0xd7ffff, .88, 3.2, 0);
+        drawWave(surface, time * 1.35, height * .42, 6.5, 120, 0x7be8ff, .46, 7, 1.7);
+        drawWave(surface, time * .95, height * .51, 4.5, 164, 0xffffff, .22, 12, 3.2);
+
+        highlight.clear();
+        const sweepX = ((time * 74) % (width + 240)) - 120;
+        highlight.ellipse(sweepX, height * .31, 150, 9).fill({ color: 0xffffff, alpha: .16 });
+        highlight.ellipse(width * .5, height * .33, width * .46, 8).fill({ color: 0xffffff, alpha: .13 });
+
+        bubbleGraphics.clear();
+        bubbles.forEach((bubble) => {
+          const by = ((bubble.y - ((time + bubble.delay) * bubble.speed)) % 1 + 1) % 1;
+          const x = bubble.x * width + Math.sin(time * 1.3 + bubble.drift) * 12;
+          const y = height * (.82 - by * .58);
+          const alpha = .1 + by * .28;
+          bubbleGraphics.circle(x, y, bubble.r).stroke({ width: 1, color: 0xb7f4ff, alpha });
+          bubbleGraphics.circle(x - bubble.r * .25, y - bubble.r * .28, Math.max(.55, bubble.r * .22)).fill({ color: 0xffffff, alpha: alpha * .7 });
+        });
+      }
+
+      app.ticker.add(renderLake);
+      lakePixi = {
+        setProgress(value) {
+          pixiState.targetProgress = Math.max(0, Math.min(1, value));
+        },
+        destroy() {
+          app.destroy(true);
+        }
+      };
+    }
+
     function render() {
       bucketEls.forEach((el, index) => {
         const amount = state.amounts[index];
@@ -1304,7 +1447,9 @@
         ? `已完成 ${target}L，挑战成功！`
         : `已完成 ${total}L，还差 ${Math.max(target - total, 0)}L 即可成功`;
       totalEl.classList.toggle("win", total === target);
-      document.querySelector(".status").style.setProperty("--progress", `${Math.min(total / target, 1) * 100}%`);
+      const progress = Math.min(total / target, 1);
+      document.querySelector(".status").style.setProperty("--progress", `${progress * 100}%`);
+      if (lakePixi) lakePixi.setProgress(progress);
       stepsEl.textContent = `步数：${state.steps}`;
       dumpBtn.disabled = state.selected === null || state.amounts[state.selected] === 0;
     }
@@ -1489,6 +1634,7 @@
       window.setTimeout(() => splash.remove(), 900);
     }
 
+    initLakePixi();
     render();
   </script>
 </body>
