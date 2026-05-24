@@ -1307,13 +1307,13 @@
         const baseColor = colors[index];
         const brightColor = mixHexColor(baseColor, "#ffffff", .42);
         const darkColor = mixHexColor(baseColor, "#001a48", .34);
-        const bubbles = Array.from({ length: 12 }, (_, bubbleIndex) => ({
+        const bubbles = Array.from({ length: 7 }, (_, bubbleIndex) => ({
           x: 68 + Math.random() * 104,
           y: 128 + Math.random() * 174,
-          r: 1.4 + Math.random() * 3.5,
-          speed: 10 + Math.random() * 18,
+          r: 1.2 + Math.random() * 2.8,
+          speed: 4 + Math.random() * 7,
           drift: Math.random() * Math.PI * 2,
-          delay: bubbleIndex * .41
+          delay: bubbleIndex * .76
         }));
         const liquidState = {
           ratio: 0,
@@ -1325,8 +1325,8 @@
 
         function waveY(x, topY, time, amplitude, wobble) {
           return topY
-            + Math.sin(x / 17 + time * 2.2) * amplitude
-            + Math.sin(x / 34 - time * 1.35) * amplitude * .55
+            + Math.sin(x / 22 + time * .72) * amplitude
+            + Math.sin(x / 46 - time * .48) * amplitude * .38
             + wobble;
         }
 
@@ -1338,13 +1338,14 @@
           layer.scale.set(width / 240, height / 360);
           liquidState.time += delta / 60;
           liquidState.ratio += (liquidState.targetRatio - liquidState.ratio) * .075;
-          liquidState.amplitude *= .965;
+          liquidState.amplitude *= .952;
 
           const ratio = Math.max(0, Math.min(1, liquidState.ratio));
           const topY = 302 - ratio * 198;
           const bounds = liquidBoundsAt(topY);
-          const amplitude = ratio > .01 ? 1.5 + ratio * 3.2 + liquidState.amplitude * 12 : 0;
-          const wobble = Math.sin(liquidState.time * 7.6) * liquidState.amplitude * 9 * liquidState.direction;
+          const stillness = Math.max(0, Math.min(1, liquidState.amplitude));
+          const amplitude = ratio > .01 ? .55 + ratio * .85 + stillness * 8.5 : 0;
+          const wobble = Math.sin(liquidState.time * 5.2) * stillness * 7 * liquidState.direction;
           const samples = 18;
 
           liquidBody.clear();
@@ -1369,28 +1370,32 @@
           liquidBody.closePath();
           liquidBody.fill({ color: mixHexColor(baseColor, "#ffffff", .08), alpha: .98 });
           liquidBody.roundRect(68, Math.max(topY + 12, 118), 104, Math.max(0, 292 - topY), 24)
-            .fill({ color: mixHexColor(baseColor, "#ffffff", .16), alpha: .2 });
+            .fill({ color: mixHexColor(baseColor, "#ffffff", .2), alpha: .16 });
 
           depthTint.roundRect(58, Math.max(topY + 18, 112), 124, Math.max(0, 298 - topY), 28)
-            .fill({ color: darkColor, alpha: .04 });
-          depthTint.ellipse(120, 303, 58, 14).fill({ color: 0x001c54, alpha: .06 });
+            .fill({ color: darkColor, alpha: .1 });
+          depthTint.ellipse(120, 304, 62, 15).fill({ color: 0x001c54, alpha: .2 });
+          depthTint.ellipse(120, 298, 50, 8).fill({ color: mixHexColor(baseColor, "#000000", .36), alpha: .18 });
 
           const surfaceRx = ratio > .86 ? 40 : 58 - ratio * 8;
-          surface.ellipse(120 + wobble * .35, topY + wobble * .08, surfaceRx, 8 + amplitude * .18)
-            .fill({ color: 0xdffcff, alpha: .42 });
-          surface.ellipse(120 - 10 + wobble * .22, topY - 1.2, surfaceRx * .72, 3.4)
-            .fill({ color: 0xffffff, alpha: .24 });
+          surface.ellipse(120 + wobble * .22, topY + wobble * .04, surfaceRx, 7.5 + amplitude * .16)
+            .fill({ color: 0xdffcff, alpha: .5 });
+          surface.ellipse(120 - 8 + wobble * .14, topY - 1.4, surfaceRx * .78, 3.2)
+            .fill({ color: 0xffffff, alpha: .34 });
+          surface.moveTo(bounds.left + 8, topY + 1);
+          surface.lineTo(bounds.right - 8, topY + 1);
+          surface.stroke({ width: 1.8, color: 0xffffff, alpha: .3, cap: "round" });
           surface.ellipse(95 + wobble * .2, topY + Math.max(20, (302 - topY) * .28), 18, Math.max(18, (302 - topY) * .28))
-            .fill({ color: brightColor, alpha: .16 });
+            .fill({ color: brightColor, alpha: .11 });
 
           caustics.moveTo(bounds.left + 8, topY + 14 + wobble * .16);
           for (let i = 1; i <= samples; i += 1) {
             const p = i / samples;
             const x = bounds.left + 8 + (bounds.right - bounds.left - 16) * p;
-            const y = topY + 14 + Math.sin(p * Math.PI * 3 + liquidState.time * 2.8) * (2.5 + liquidState.amplitude * 7);
+            const y = topY + 13 + Math.sin(p * Math.PI * 2.4 + liquidState.time * .95) * (1.2 + stillness * 4.5);
             caustics.lineTo(x, y);
           }
-          caustics.stroke({ width: 2.4, color: 0xffffff, alpha: .24, cap: "round", join: "round" });
+          caustics.stroke({ width: 1.9, color: 0xffffff, alpha: .18, cap: "round", join: "round" });
 
           bubbles.forEach((bubble) => {
             const travel = ((liquidState.time * bubble.speed + bubble.delay * 35) % 188);
@@ -1398,8 +1403,8 @@
             if (y <= topY + 8 || y > 310) return;
             const boundsAtBubble = liquidBoundsAt(y);
             const x = Math.max(boundsAtBubble.left + 8, Math.min(boundsAtBubble.right - 8,
-              bubble.x + Math.sin(liquidState.time * 1.6 + bubble.drift) * 6));
-            const alpha = Math.max(0, Math.min(.3, (y - topY) / 80));
+              bubble.x + Math.sin(liquidState.time * .65 + bubble.drift) * 4));
+            const alpha = Math.max(0, Math.min(.22, (y - topY) / 96));
             bubbleLayer.circle(x, y, bubble.r).stroke({ width: 1.1, color: 0xcffbff, alpha });
             bubbleLayer.circle(x - bubble.r * .24, y - bubble.r * .28, Math.max(.55, bubble.r * .22))
               .fill({ color: 0xffffff, alpha: alpha * .85 });
