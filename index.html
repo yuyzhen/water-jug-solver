@@ -670,8 +670,12 @@
       selected: null,
       steps: 0,
       history: [],
-      won: false
+      won: false,
+      isAnimating: false,
+      animationTimers: []
     };
+    const liquidUpdateDelay = 360;
+    const pourAnimationDuration = 1560;
 
     const row = document.getElementById("bottleRow");
     const lake = document.getElementById("lake");
@@ -847,11 +851,14 @@
     document.getElementById("resetBtn").addEventListener("click", resetGame);
 
     function resetGame() {
+      clearAnimationTimers();
+      cleanupBottleMotion();
       state.amounts = [0, 0, 0];
       state.selected = null;
       state.steps = 0;
       state.history = [];
       state.won = false;
+      state.isAnimating = false;
       hintIndex = 0;
       hideWin();
       setMessage("湖水已经归零，重新开始。");
@@ -859,6 +866,10 @@
     }
 
     document.getElementById("undoBtn").addEventListener("click", () => {
+      if (state.isAnimating) {
+        setMessage("等这次倒水结束后再撤销。");
+        return;
+      }
       const last = state.history.pop();
       if (!last) {
         setMessage("还没有可撤销的倒水步骤。");
@@ -874,6 +885,10 @@
     });
 
     function handleBucket(index) {
+      if (state.isAnimating) {
+        setMessage("水还在流，稍等一下。");
+        return;
+      }
       if (state.selected === null) {
         state.selected = index;
         setMessage(`${capacities[index]}L 桶已选中。`);
@@ -892,6 +907,10 @@
     }
 
     function dumpToLake() {
+      if (state.isAnimating) {
+        setMessage("水还在流，稍等一下。");
+        return;
+      }
       const index = state.selected;
       if (index === null) {
         setMessage("先选中一个要倒回湖里的水桶。");
@@ -904,15 +923,22 @@
 
       saveHistory();
       const poured = state.amounts[index];
-      state.amounts[index] = 0;
-      state.steps += 1;
+      const nextAmounts = [...state.amounts];
+      nextAmounts[index] = 0;
       animatePour(index, "lake");
       setMessage(`${capacities[index]}L 桶倒回湖里 ${poured}L。`);
       state.selected = null;
-      renderSoon();
+      scheduleLiquidUpdate(() => {
+        state.amounts = nextAmounts;
+        state.steps += 1;
+      });
     }
 
     function fillFromLake() {
+      if (state.isAnimating) {
+        setMessage("水还在流，稍等一下。");
+        return;
+      }
       const index = state.selected;
       if (index === null) {
         setMessage("先选中一个水桶。");
@@ -924,12 +950,15 @@
         return;
       }
       saveHistory();
-      state.amounts[index] = capacities[index];
-      state.steps += 1;
+      const nextAmounts = [...state.amounts];
+      nextAmounts[index] = capacities[index];
       animateLakeFill(index);
       setMessage(`从湖里装满 ${capacities[index]}L 桶，加入 ${need}L。`);
       state.selected = null;
-      renderSoon();
+      scheduleLiquidUpdate(() => {
+        state.amounts = nextAmounts;
+        state.steps += 1;
+      });
     }
 
     function pourToBucket(from, to) {
@@ -950,13 +979,16 @@
 
       saveHistory();
       const moved = Math.min(available, space);
-      state.amounts[from] -= moved;
-      state.amounts[to] += moved;
-      state.steps += 1;
+      const nextAmounts = [...state.amounts];
+      nextAmounts[from] -= moved;
+      nextAmounts[to] += moved;
       animatePour(from, to);
       setMessage(`${capacities[from]}L 桶向 ${capacities[to]}L 桶倒入 ${moved}L。`);
       state.selected = null;
-      renderSoon();
+      scheduleLiquidUpdate(() => {
+        state.amounts = nextAmounts;
+        state.steps += 1;
+      });
     }
 
     function saveHistory() {
@@ -971,6 +1003,35 @@
     function renderSoon() {
       render();
       window.setTimeout(checkWin, 1560);
+    }
+
+    function scheduleLiquidUpdate(applyUpdate) {
+      state.isAnimating = true;
+      dumpBtn.disabled = true;
+      render();
+      const updateTimer = window.setTimeout(() => {
+        applyUpdate();
+        render();
+      }, liquidUpdateDelay);
+      const endTimer = window.setTimeout(() => {
+        cleanupBottleMotion();
+        state.isAnimating = false;
+        state.animationTimers = [];
+        render();
+        checkWin();
+      }, pourAnimationDuration);
+      state.animationTimers.push(updateTimer, endTimer);
+    }
+
+    function clearAnimationTimers() {
+      state.animationTimers.forEach((timer) => window.clearTimeout(timer));
+      state.animationTimers = [];
+    }
+
+    function cleanupBottleMotion() {
+      bucketEls.forEach((el) => {
+        el.classList.remove("tilting-left", "tilting-right", "receiving");
+      });
     }
 
     function render() {
@@ -1064,28 +1125,23 @@
 
     function animateLakeFill(to) {
       const lakeBox = lake.getBoundingClientRect();
-      const targetBox = bucketEls[to].getBoundingClientRect();
+      const targetMouth = getBottleMouthPoint(to);
       addStream(
         lakeBox.left + lakeBox.width * .5,
         lakeBox.bottom - 18,
-        targetBox.left + targetBox.width * .5,
-        targetBox.top + targetBox.height * .24,
+        targetMouth.x,
+        targetMouth.y,
         { arc: -120, splash: true }
       );
       pulse(to, "receiving");
     }
 
     function animatePour(from, to) {
-      const fromEl = bucketEls[from];
-      const fromBox = fromEl.getBoundingClientRect();
       const directionClass = to === "lake"
         ? "tilting-left"
         : from < to ? "tilting-right" : "tilting-left";
       const poursRight = directionClass === "tilting-right";
-      const mouth = {
-        x: fromBox.left + fromBox.width * (poursRight ? .72 : .28),
-        y: fromBox.top + fromBox.height * .16
-      };
+      const mouth = getBottleMouthPoint(from, poursRight ? "right" : "left");
       pulse(from, directionClass);
 
       if (to === "lake") {
@@ -1100,15 +1156,24 @@
         return;
       }
 
-      const toBox = bucketEls[to].getBoundingClientRect();
+      const toMouth = getBottleMouthPoint(to);
       pulse(to, "receiving");
       addStream(
         mouth.x,
         mouth.y,
-        toBox.left + toBox.width * .5,
-        toBox.top + toBox.height * .24,
+        toMouth.x,
+        toMouth.y,
         { arc: from < to ? -70 : 70, splash: true }
       );
+    }
+
+    function getBottleMouthPoint(index, side = "center") {
+      const wrapBox = bucketEls[index].querySelector(".bottle-wrap").getBoundingClientRect();
+      const sideFactor = side === "right" ? .74 : side === "left" ? .26 : .5;
+      return {
+        x: wrapBox.left + wrapBox.width * sideFactor,
+        y: wrapBox.top + wrapBox.height * .12
+      };
     }
 
     function pulse(index, className) {
