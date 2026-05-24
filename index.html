@@ -22,13 +22,14 @@
       margin: 0;
       min-height: 100vh;
       overflow: hidden;
-      font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+      overflow-x: hidden;
+      font-family: "Microsoft YaHei", "PingFang SC", "Inter", system-ui, sans-serif;
       color: var(--ink);
       background:
-        radial-gradient(circle at 26% 12%, rgba(92, 63, 187, .46), transparent 34%),
-        radial-gradient(circle at 76% 30%, rgba(33, 198, 255, .18), transparent 31%),
-        radial-gradient(ellipse at 50% 100%, rgba(6, 198, 255, .13), transparent 36%),
-        linear-gradient(180deg, #241163 0%, #17104c 48%, #06102f 100%);
+        radial-gradient(circle at 16% 8%, rgba(104, 84, 255, .34), transparent 28%),
+        radial-gradient(circle at 78% 18%, rgba(28, 211, 255, .22), transparent 26%),
+        radial-gradient(ellipse at 50% 92%, rgba(0, 142, 255, .2), transparent 46%),
+        linear-gradient(180deg, #060b2d 0%, #08134b 45%, #02081f 100%);
     }
 
     body::before {
@@ -40,34 +41,34 @@
       background-image:
         radial-gradient(circle, rgba(255,255,255,.56) 0 1px, transparent 2px),
         radial-gradient(circle, rgba(61,215,255,.7) 0 1px, transparent 2px);
-      background-size: 92px 108px, 143px 121px;
+      background-size: 104px 116px, 157px 131px;
       background-position: 14px 24px, 58px 71px;
       mask-image: linear-gradient(180deg, #000 0 68%, transparent);
     }
 
     .game {
       position: relative;
-      width: min(100vw, 980px);
+      width: min(100vw, 1180px);
       height: 100vh;
-      min-height: 680px;
+      min-height: 720px;
       margin: 0 auto;
-      padding: 22px clamp(16px, 4vw, 44px) 28px;
+      padding: 26px clamp(18px, 4vw, 52px) 24px;
       display: grid;
-      grid-template-rows: auto minmax(150px, 24vh) 1fr auto;
-      gap: 12px;
+      grid-template-rows: auto 132px minmax(390px, 1fr) auto;
+      gap: 16px;
     }
 
     .game::after {
       content: "";
       position: absolute;
-      left: clamp(18px, 6vw, 70px);
-      right: clamp(18px, 6vw, 70px);
-      bottom: 82px;
-      height: 150px;
+      left: clamp(10px, 4vw, 54px);
+      right: clamp(10px, 4vw, 54px);
+      bottom: 92px;
+      height: 190px;
       border-radius: 50%;
       background:
-        radial-gradient(ellipse at 50% 50%, rgba(58, 223, 255, .18), transparent 56%),
-        radial-gradient(ellipse at 50% 82%, rgba(1, 7, 28, .48), transparent 58%);
+        radial-gradient(ellipse at 50% 42%, rgba(45, 208, 255, .22), transparent 58%),
+        radial-gradient(ellipse at 50% 82%, rgba(0, 14, 58, .62), transparent 64%);
       pointer-events: none;
       z-index: 0;
       filter: blur(.2px);
@@ -79,24 +80,28 @@
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
-      gap: 18px;
+      gap: 24px;
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(24px, 4.5vw, 46px);
+      font-size: clamp(34px, 5.4vw, 72px);
       line-height: 1;
-      color: #fff7b8;
-      text-shadow: 0 5px 0 rgba(0,0,0,.22), 0 0 24px rgba(255, 211, 79, .35);
+      color: #fff7bd;
+      text-shadow:
+        0 7px 0 rgba(0,0,0,.28),
+        0 0 26px rgba(255, 221, 92, .38),
+        -6px 0 24px rgba(101, 188, 255, .28);
       letter-spacing: 0;
     }
 
     .subtitle {
       margin: 8px 0 0;
-      color: var(--muted);
-      font-size: clamp(13px, 1.8vw, 16px);
+      color: rgba(230, 240, 255, .83);
+      font-size: clamp(14px, 1.8vw, 18px);
       line-height: 1.55;
       max-width: 620px;
+      text-shadow: 0 0 16px rgba(124, 186, 255, .2);
     }
 
     .controls {
@@ -106,20 +111,56 @@
       justify-content: flex-end;
     }
 
-    button {
-      appearance: none;
-      border: 1px solid rgba(255,255,255,.22);
-      color: white;
-      background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.07));
-      border-radius: 8px;
-      padding: 9px 12px;
-      font: inherit;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 12px 25px rgba(0,0,0,.16);
+    .controls button {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
     }
 
-    button:hover { background: rgba(255,255,255,.16); }
+    .controls button span {
+      display: grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      font-size: 21px;
+      line-height: 1;
+      filter: drop-shadow(0 0 8px rgba(151, 231, 255, .48));
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid rgba(125, 173, 255, .42);
+      color: white;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.05)),
+        radial-gradient(circle at 50% 0%, rgba(82, 184, 255, .18), transparent 62%);
+      border-radius: 10px;
+      padding: 11px 16px;
+      font: inherit;
+      font-weight: 850;
+      cursor: pointer;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.28),
+        0 0 0 1px rgba(46, 114, 255, .14),
+        0 14px 28px rgba(0,0,0,.24);
+      backdrop-filter: blur(14px);
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(151, 231, 255, .72);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.07)),
+        radial-gradient(circle at 50% 0%, rgba(62, 207, 255, .28), transparent 64%);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.35),
+        0 0 22px rgba(64, 202, 255, .24),
+        0 16px 30px rgba(0,0,0,.28);
+    }
+
+    button:active { transform: translateY(1px) scale(.99); }
+
     button:disabled {
       cursor: default;
       opacity: .46;
@@ -128,51 +169,106 @@
 
     .lake {
       position: relative;
+      z-index: 4;
       align-self: stretch;
-      border: 1px solid rgba(120, 232, 255, .38);
-      border-radius: 18px 18px 46% 46% / 14px 14px 38% 38%;
-      overflow: hidden;
+      border: 1px solid rgba(112, 117, 255, .78);
+      border-radius: 18px;
+      overflow: visible;
       cursor: pointer;
       box-shadow:
-        inset 0 24px 26px rgba(255,255,255,.14),
-        inset 0 -28px 58px rgba(2, 24, 83, .72),
-        0 24px 48px rgba(0,0,0,.2),
-        0 0 42px rgba(23, 188, 255, .13);
+        inset 0 1px 0 rgba(255,255,255,.2),
+        inset 0 -34px 58px rgba(1, 19, 81, .86),
+        0 24px 54px rgba(0,0,0,.26),
+        0 0 42px rgba(45, 141, 255, .2);
       background:
-        radial-gradient(ellipse at 23% 8%, rgba(255,255,255,.42), transparent 15%),
-        radial-gradient(ellipse at 76% 34%, rgba(137,235,255,.28), transparent 16%),
-        radial-gradient(ellipse at 50% 110%, rgba(255,255,255,.36), transparent 18%),
-        linear-gradient(180deg, rgba(71, 215, 255, .82), rgba(14, 119, 202, .83) 52%, rgba(4, 31, 91, .96));
+        radial-gradient(ellipse at 48% 0%, rgba(213, 251, 255, .62), transparent 22%),
+        radial-gradient(ellipse at 77% 54%, rgba(46, 188, 255, .26), transparent 23%),
+        linear-gradient(180deg, rgba(31, 175, 255, .92), rgba(15, 92, 216, .72) 40%, rgba(4, 21, 92, .96));
     }
 
     .lake::before,
     .lake::after {
       content: "";
       position: absolute;
-      left: -10%;
-      right: -10%;
-      height: 46px;
+      left: 0;
+      right: 0;
+      height: 30px;
       border-radius: 50%;
+      overflow: hidden;
       background:
-        linear-gradient(90deg, transparent, rgba(255,255,255,.33), transparent),
-        rgba(185, 242, 255, .18);
+        repeating-linear-gradient(105deg, transparent 0 74px, rgba(255,255,255,.35) 86px, transparent 118px),
+        linear-gradient(90deg, transparent, rgba(255,255,255,.48), transparent),
+        rgba(185, 242, 255, .16);
       animation: wave 4.8s ease-in-out infinite;
     }
 
-    .lake::before { top: 24px; }
-    .lake::after { top: 62px; opacity: .28; animation-delay: -1.7s; }
+    .lake::before { top: 32px; }
+    .lake::after { top: 48px; opacity: .34; animation-delay: -1.7s; }
+
+    .lake-progress {
+      position: absolute;
+      right: clamp(18px, 4vw, 42px);
+      top: 50%;
+      transform: translateY(-46%);
+      display: grid;
+      justify-items: end;
+      line-height: 1;
+      text-align: right;
+      pointer-events: none;
+    }
+
+    .lake-progress strong {
+      font-size: clamp(42px, 6vw, 68px);
+      font-weight: 950;
+      letter-spacing: 0;
+      color: #f6fbff;
+      text-shadow: 0 5px 0 rgba(0,0,0,.34), 0 0 24px rgba(107, 218, 255, .38);
+    }
+
+    .lake-progress strong span {
+      color: #ffe268;
+      text-shadow: 0 5px 0 rgba(0,0,0,.34), 0 0 24px rgba(255, 218, 72, .42);
+    }
+
+    .lake-progress em {
+      margin-top: 8px;
+      color: rgba(245, 248, 255, .78);
+      font-style: normal;
+      font-size: clamp(14px, 1.8vw, 18px);
+      font-weight: 800;
+    }
 
     .lake-label {
       position: absolute;
       left: 24px;
-      bottom: 18px;
+      top: 18px;
+      bottom: auto;
       color: rgba(255,255,255,.82);
-      font-weight: 800;
-      padding: 5px 10px;
+      font-weight: 900;
+      padding: 7px 18px;
       border-radius: 999px;
-      background: rgba(4, 18, 61, .22);
-      border: 1px solid rgba(198, 247, 255, .18);
+      background: rgba(8, 17, 86, .44);
+      border: 1px solid rgba(198, 247, 255, .26);
       text-shadow: 0 2px 12px rgba(0,0,0,.36);
+      backdrop-filter: blur(10px);
+    }
+
+    .lake-chip {
+      position: absolute;
+      left: 50%;
+      bottom: -23px;
+      transform: translateX(-50%);
+      z-index: 6;
+      min-width: min(360px, 70%);
+      padding: 8px 22px;
+      border-radius: 0 0 22px 22px;
+      text-align: center;
+      color: rgba(221, 239, 255, .88);
+      font-weight: 850;
+      background: linear-gradient(180deg, rgba(3, 13, 60, .84), rgba(5, 24, 93, .72));
+      border: 1px solid rgba(79, 218, 255, .45);
+      box-shadow: 0 0 22px rgba(40, 192, 255, .22);
+      pointer-events: none;
     }
 
     .bottle-row {
@@ -182,8 +278,8 @@
       grid-template-columns: repeat(3, minmax(105px, 1fr));
       align-items: end;
       justify-items: center;
-      gap: clamp(14px, 4vw, 46px);
-      padding: 24px 0 10px;
+      gap: clamp(24px, 5vw, 74px);
+      padding: 8px 0 2px;
     }
 
     .bucket {
@@ -193,8 +289,8 @@
       --bottle-width: 180px;
       --bottle-height: 360px;
       position: relative;
-      width: clamp(112px, 21vw, 205px);
-      height: clamp(300px, 48vh, 444px);
+      width: clamp(160px, 25vw, 250px);
+      height: clamp(330px, 51vh, 470px);
       border: 0;
       background: transparent;
       padding: 0;
@@ -228,7 +324,7 @@
     }
 
     .bucket.selected {
-      transform: translateY(-22px);
+      transform: translateY(-18px);
       filter: none;
     }
     .bucket.selected::after { transform: translateY(22px) scale(.88); opacity: .38; }
@@ -240,11 +336,81 @@
     .bottle-wrap {
       position: absolute;
       left: 50%;
-      bottom: 34px;
+      bottom: 46px;
       width: var(--bottle-width);
       height: var(--bottle-height);
       transform: translateX(-50%);
       transform-origin: 50% 17%;
+    }
+
+    .bucket-tag {
+      position: absolute;
+      left: 50%;
+      top: -3px;
+      transform: translateX(-50%);
+      z-index: 4;
+      min-width: 112px;
+      padding: 8px 18px;
+      border-radius: 8px;
+      color: rgba(236, 245, 255, .95);
+      font-size: clamp(16px, 2vw, 22px);
+      font-weight: 950;
+      letter-spacing: 0;
+      background: linear-gradient(180deg, rgba(21, 40, 140, .72), rgba(3, 14, 65, .64));
+      border: 1px solid rgba(91, 137, 255, .5);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 0 22px rgba(38, 129, 255, .2);
+      pointer-events: none;
+    }
+
+    .bucket-base {
+      position: absolute;
+      left: 50%;
+      bottom: 42px;
+      width: min(178px, 78%);
+      height: 42px;
+      transform: translateX(-50%);
+      border-radius: 50% / 28%;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(119, 230, 255, .72), transparent 48%),
+        linear-gradient(180deg, rgba(28, 136, 255, .86), rgba(4, 22, 106, .96));
+      border: 1px solid rgba(96, 211, 255, .58);
+      box-shadow:
+        inset 0 8px 18px rgba(255,255,255,.13),
+        inset 0 -12px 18px rgba(0,0,0,.28),
+        0 12px 34px rgba(0, 91, 255, .28);
+      pointer-events: none;
+    }
+
+    .scale {
+      position: absolute;
+      right: 3px;
+      bottom: 92px;
+      width: 34px;
+      height: 210px;
+      border-left: 1px solid rgba(224, 236, 255, .36);
+      color: rgba(236, 244, 255, .8);
+      pointer-events: none;
+    }
+
+    .scale span {
+      position: absolute;
+      left: 0;
+      width: 14px;
+      height: 1px;
+      background: rgba(224, 236, 255, .55);
+      transform: translateY(-50%);
+    }
+
+    .scale span::after {
+      content: attr(data-value);
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px;
+      font-weight: 750;
+      color: rgba(239, 246, 255, .82);
+      text-shadow: 0 2px 8px rgba(0,0,0,.45);
     }
 
     .bottle-svg {
@@ -259,6 +425,11 @@
     .liquid-layer {
       transform-origin: 120px 302px;
       filter: saturate(1.12);
+    }
+
+    .liquid-wave {
+      animation: liquidWave 2.8s ease-in-out infinite;
+      transform-origin: 120px 120px;
     }
 
     .liquid-fill,
@@ -279,11 +450,15 @@
       transition-duration: .86s;
     }
 
+    .bucket.receiving .liquid-wave {
+      animation-duration: 1.05s;
+    }
+
     .bucket-info {
       position: absolute;
       left: 0;
       right: 0;
-      bottom: -18px;
+      bottom: -3px;
       display: grid;
       place-items: center;
       gap: 2px;
@@ -292,15 +467,18 @@
     }
 
     .amount {
-      font-size: clamp(22px, 3.4vw, 34px);
-      font-weight: 900;
-      color: #fff;
+      font-size: clamp(28px, 3.9vw, 40px);
+      font-weight: 950;
+      color: #f8fbff;
+      line-height: 1;
+      text-shadow: 0 5px 0 rgba(0,0,0,.3), 0 0 22px rgba(98, 206, 255, .4);
     }
 
     .capacity {
-      color: rgba(255,255,255,.78);
-      font-size: 13px;
-      font-weight: 700;
+      margin-top: 6px;
+      color: rgba(235,245,255,.86);
+      font-size: 15px;
+      font-weight: 800;
     }
 
     .pour-svg {
@@ -377,32 +555,40 @@
       grid-template-columns: 1fr auto;
       gap: 14px;
       align-items: center;
-      padding: 12px 16px;
-      border-top: 1px solid rgba(255,255,255,.16);
+      padding: 18px 28px;
+      border: 1px solid rgba(89, 128, 255, .48);
+      border-radius: 14px;
+      background:
+        linear-gradient(180deg, rgba(12, 25, 92, .72), rgba(2, 9, 42, .64)),
+        radial-gradient(circle at 12% 0%, rgba(73, 213, 255, .14), transparent 38%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 18px 42px rgba(0,0,0,.22);
+      backdrop-filter: blur(16px);
       color: rgba(255,255,255,.86);
     }
 
     .total {
       font-size: clamp(22px, 4vw, 40px);
-      font-weight: 900;
+      font-weight: 950;
       color: var(--gold);
-      text-shadow: 0 4px 0 rgba(0,0,0,.22);
+      text-shadow: 0 5px 0 rgba(0,0,0,.26), 0 0 24px rgba(255, 221, 92, .36);
     }
 
     .message {
       min-height: 24px;
-      color: var(--muted);
-      font-weight: 700;
+      color: rgba(236, 244, 255, .88);
+      font-size: clamp(15px, 1.8vw, 19px);
+      font-weight: 800;
     }
 
     .target-meter {
       margin-top: 9px;
-      width: min(390px, 100%);
-      height: 8px;
+      width: min(520px, 100%);
+      height: 12px;
       border-radius: 999px;
       overflow: hidden;
-      background: rgba(255,255,255,.12);
-      box-shadow: inset 0 1px 3px rgba(0,0,0,.28);
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(155, 201, 255, .17);
+      box-shadow: inset 0 1px 4px rgba(0,0,0,.38);
     }
 
     .target-meter span {
@@ -410,8 +596,8 @@
       width: var(--progress);
       height: 100%;
       border-radius: inherit;
-      background: linear-gradient(90deg, #36d7ff, #ffe86a 82%, #ffffff);
-      box-shadow: 0 0 18px rgba(255, 211, 79, .28);
+      background: linear-gradient(90deg, #4c6dff, #2adfff 46%, #fff06a 92%);
+      box-shadow: 0 0 22px rgba(72, 220, 255, .28), 0 0 22px rgba(255, 211, 79, .22);
       transition: width .72s cubic-bezier(.19, 1, .22, 1);
     }
 
@@ -527,6 +713,11 @@
       78% { transform: translateX(-3%) skewX(-4deg); }
     }
 
+    @keyframes liquidWave {
+      0%, 100% { transform: translateX(-6px); opacity: .38; }
+      50% { transform: translateX(6px); opacity: .74; }
+    }
+
     @keyframes firework {
       0% {
         opacity: 0;
@@ -586,31 +777,72 @@
     @media (max-width: 680px) {
       body { overflow-y: auto; }
       .game {
-        min-height: 760px;
+        min-height: 820px;
         height: auto;
-        grid-template-rows: auto 150px 420px auto;
+        grid-template-rows: auto 128px 430px auto;
+        padding: 20px 18px 22px;
+      }
+      h1 { font-size: 31px; }
+      .subtitle {
+        font-size: 13px;
+        white-space: normal;
       }
       header {
         flex-direction: column;
         align-items: stretch;
+        gap: 14px;
       }
-      .controls { justify-content: flex-start; }
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+      }
+      .controls button {
+        justify-content: center;
+        gap: 5px;
+        padding: 9px 7px;
+        font-size: 13px;
+        min-width: 0;
+      }
+      .controls button span {
+        width: 16px;
+        height: 16px;
+        font-size: 16px;
+      }
+      .lake-label {
+        left: 26px;
+        top: 18px;
+      }
+      .lake-progress strong { font-size: 30px; }
+      .lake-progress {
+        left: 0;
+        right: 0;
+        justify-items: center;
+        text-align: center;
+        transform: translateY(-28%) scale(.78);
+        transform-origin: center center;
+      }
+      .lake-chip { min-width: 74%; font-size: 13px; }
       .bottle-row {
         display: block;
-        height: 420px;
+        height: 430px;
         overflow: hidden;
       }
       .bucket {
         position: absolute;
         width: 112px;
-        height: 318px;
+        height: 346px;
       }
       .bucket:nth-child(1) { left: 18px; }
       .bucket:nth-child(2) { left: 136px; }
       .bucket:nth-child(3) { left: 254px; }
       .bottle-wrap {
-        bottom: 54px;
+        bottom: 82px;
       }
+      .bucket-base { bottom: 56px; height: 30px; width: 96px; }
+      .bucket-info { bottom: 0; }
+      .bucket-tag { top: 10px; min-width: 80px; padding: 6px 10px; font-size: 14px; }
+      .scale { display: none; }
       .status { grid-template-columns: 1fr; }
     }
   </style>
@@ -623,15 +855,20 @@
         <p class="subtitle">用 38L、39L、75L 三个无刻度水桶，从湖里精确留下 148L 水。</p>
       </div>
       <div class="controls">
-        <button id="dumpBtn" type="button" disabled>倒回湖里</button>
-        <button id="undoBtn" type="button">撤销</button>
-        <button id="hintBtn" type="button">提示</button>
-        <button id="resetBtn" type="button">重来</button>
+        <button id="dumpBtn" type="button" disabled><span aria-hidden="true">↩</span>倒回湖里</button>
+        <button id="undoBtn" type="button"><span aria-hidden="true">↶</span>撤销</button>
+        <button id="hintBtn" type="button"><span aria-hidden="true">◉</span>提示</button>
+        <button id="resetBtn" type="button"><span aria-hidden="true">↻</span>重来</button>
       </div>
     </header>
 
     <section id="lake" class="lake" role="button" tabindex="0" aria-label="湖水">
       <div class="lake-label">湖水</div>
+      <div class="lake-progress" aria-hidden="true">
+        <strong><span id="lakeTotal">0</span> / <span>148L</span></strong>
+        <em>目标 148L</em>
+      </div>
+      <div class="lake-chip" id="lakeHint">已完成 0L，继续挑战吧！</div>
     </section>
 
     <section id="bottleRow" class="bottle-row" aria-label="三个水桶"></section>
@@ -673,6 +910,8 @@
 
     const row = document.getElementById("bottleRow");
     const lake = document.getElementById("lake");
+    const lakeTotalEl = document.getElementById("lakeTotal");
+    const lakeHintEl = document.getElementById("lakeHint");
     const totalEl = document.getElementById("total");
     const messageEl = document.getElementById("message");
     const stepsEl = document.getElementById("steps");
@@ -703,12 +942,15 @@
       button.style.setProperty("--fill", colors[index]);
       setBottleSize(button, capacity);
       button.innerHTML = `
+        <div class="bucket-tag">${capacity}L 瓶</div>
         <div class="bottle-wrap">
           ${bottleSvg(index)}
         </div>
+        <div class="scale">${scaleMarks(capacity)}</div>
+        <div class="bucket-base"></div>
         <div class="bucket-info">
           <div class="amount">0L</div>
-          <div class="capacity">${capacity}L 桶</div>
+          <div class="capacity">容量 ${capacity}L</div>
         </div>
       `;
       button.addEventListener("click", () => handleBucket(index));
@@ -723,11 +965,19 @@
     function setBottleSize(button, capacity) {
       const isMobile = window.matchMedia("(max-width: 680px)").matches;
       const scale = Math.sqrt(capacity / Math.max(...capacities));
-      const baseWidth = isMobile ? 112 : 205;
-      const baseHeight = isMobile ? 224 : 410;
+      const baseWidth = isMobile ? 112 : 224;
+      const baseHeight = isMobile ? 224 : 370;
       button.style.setProperty("--bucket-scale", String(scale));
       button.style.setProperty("--bottle-width", `${Math.round(baseWidth * scale)}px`);
       button.style.setProperty("--bottle-height", `${Math.round(baseHeight * scale)}px`);
+    }
+
+    function scaleMarks(capacity) {
+      const marks = [capacity, Math.round(capacity * .75), Math.round(capacity * .5), Math.round(capacity * .25), 0];
+      return marks.map((mark) => {
+        const top = 100 - (mark / capacity) * 100;
+        return `<span style="top:${top}%" data-value="${mark}"></span>`;
+      }).join("");
     }
 
     function bottleSvg(index) {
@@ -742,27 +992,28 @@
         <svg class="bottle-svg" viewBox="0 0 240 360" aria-hidden="true">
           <defs>
             <filter id="${glowId}" x="-35%" y="-35%" width="170%" height="170%">
-              <feGaussianBlur stdDeviation="2.3" result="blur"/>
-              <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.15 0 0 0 0 0.72 0 0 0 0 1 0 0 0 .75 0"/>
+              <feGaussianBlur stdDeviation="2.8" result="blur"/>
+              <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.08 0 0 0 0 0.56 0 0 0 0 1 0 0 0 .82 0"/>
               <feMerge>
                 <feMergeNode/>
                 <feMergeNode in="SourceGraphic"/>
               </feMerge>
             </filter>
             <linearGradient id="${glassId}" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stop-color="#39bfff" stop-opacity=".88"/>
-              <stop offset="10%" stop-color="#0e5bb9" stop-opacity=".92"/>
-              <stop offset="31%" stop-color="#c8f7ff" stop-opacity=".16"/>
-              <stop offset="54%" stop-color="#061239" stop-opacity=".36"/>
-              <stop offset="76%" stop-color="#e5fdff" stop-opacity=".34"/>
-              <stop offset="91%" stop-color="#1388e8" stop-opacity=".92"/>
-              <stop offset="100%" stop-color="#04317f" stop-opacity=".96"/>
+              <stop offset="0%" stop-color="#dffcff" stop-opacity=".85"/>
+              <stop offset="8%" stop-color="#19baff" stop-opacity=".95"/>
+              <stop offset="18%" stop-color="#043cba" stop-opacity=".88"/>
+              <stop offset="35%" stop-color="#ffffff" stop-opacity=".18"/>
+              <stop offset="56%" stop-color="#07113d" stop-opacity=".28"/>
+              <stop offset="76%" stop-color="#ffffff" stop-opacity=".5"/>
+              <stop offset="91%" stop-color="#0ba9ff" stop-opacity=".95"/>
+              <stop offset="100%" stop-color="#002a93" stop-opacity=".98"/>
             </linearGradient>
-            <radialGradient id="${bodyId}" cx="50%" cy="38%" r="70%">
-              <stop offset="0%" stop-color="#ffffff" stop-opacity=".11"/>
-              <stop offset="38%" stop-color="#183b87" stop-opacity=".11"/>
-              <stop offset="74%" stop-color="#020929" stop-opacity=".3"/>
-              <stop offset="100%" stop-color="#02061b" stop-opacity=".55"/>
+            <radialGradient id="${bodyId}" cx="48%" cy="34%" r="76%">
+              <stop offset="0%" stop-color="#c9edff" stop-opacity=".18"/>
+              <stop offset="44%" stop-color="#164aa8" stop-opacity=".12"/>
+              <stop offset="76%" stop-color="#02113e" stop-opacity=".34"/>
+              <stop offset="100%" stop-color="#00051d" stop-opacity=".62"/>
             </radialGradient>
             <linearGradient id="${rimId}" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stop-color="#e9fdff"/>
@@ -771,9 +1022,9 @@
               <stop offset="100%" stop-color="#02164e"/>
             </linearGradient>
             <linearGradient id="${liquidId}" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="color-mix(in srgb, var(--fill), white 38%)"/>
-              <stop offset="52%" stop-color="var(--fill)"/>
-              <stop offset="100%" stop-color="color-mix(in srgb, var(--fill), black 22%)"/>
+              <stop offset="0%" stop-color="color-mix(in srgb, var(--fill), white 48%)" stop-opacity=".9"/>
+              <stop offset="42%" stop-color="var(--fill)" stop-opacity=".76"/>
+              <stop offset="100%" stop-color="color-mix(in srgb, var(--fill), black 20%)" stop-opacity=".86"/>
             </linearGradient>
             <linearGradient id="${shineId}" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stop-color="white" stop-opacity="0"/>
@@ -783,38 +1034,37 @@
               <stop offset="100%" stop-color="white" stop-opacity="0"/>
             </linearGradient>
             <clipPath id="${clipId}">
-              <path d="M58 140 C58 121 72 108 96 103 L100 87 L140 87 L144 103 C168 108 182 121 182 140 L182 281 C182 300 168 311 143 312 L97 312 C72 311 58 300 58 281 Z"/>
+              <path d="M55 142 C55 119 74 103 96 99 L100 77 L140 77 L144 99 C166 103 185 119 185 142 L185 278 C185 302 169 315 144 318 L96 318 C71 315 55 302 55 278 Z"/>
             </clipPath>
           </defs>
 
-          <ellipse cx="120" cy="329" rx="82" ry="15" fill="#000a2f" opacity=".68"/>
-          <ellipse cx="120" cy="323" rx="70" ry="11" fill="#1dd5ff" opacity=".16"/>
+          <ellipse cx="120" cy="329" rx="82" ry="15" fill="#000824" opacity=".72"/>
+          <ellipse cx="120" cy="323" rx="70" ry="11" fill="#21d7ff" opacity=".2"/>
 
-          <rect x="96" y="51" width="48" height="48" rx="9" fill="url(#${glassId})" opacity=".84"/>
-          <path d="M98 56 L98 101 M142 56 L142 101" stroke="#7deaff" stroke-width="5" stroke-opacity=".22"/>
-          <ellipse cx="120" cy="50" rx="23" ry="6" fill="#071846" stroke="#75e8ff" stroke-width="3" opacity=".9"/>
-          <ellipse cx="120" cy="48.6" rx="15" ry="2.4" fill="#d9fdff" opacity=".26"/>
-          <ellipse cx="120" cy="76" rx="36" ry="19" fill="url(#${glassId})" opacity=".82"/>
-          <ellipse cx="120" cy="74" rx="24" ry="8.5" fill="#071846" opacity=".74"/>
+          <path d="M99 51 L99 100 C105 105 135 105 141 100 L141 51 Z" fill="url(#${bodyId})" stroke="url(#${glassId})" stroke-width="5" opacity=".92"/>
+          <ellipse cx="120" cy="50" rx="21" ry="5.2" fill="#071846" stroke="#8bf2ff" stroke-width="2.4" opacity=".94"/>
+          <ellipse cx="120" cy="48.5" rx="14" ry="2.2" fill="#e9ffff" opacity=".3"/>
+          <path d="M86 101 C94 90 101 82 100 72 L140 72 C139 82 146 90 154 101 C174 108 194 124 194 148 L194 278 C194 308 174 323 144 326 L96 326 C66 323 46 308 46 278 L46 148 C46 124 66 108 86 101 Z"
+            fill="url(#${bodyId})" stroke="url(#${glassId})" stroke-width="9" stroke-linejoin="round" filter="url(#${glowId})"/>
 
           <g class="liquid-layer" clip-path="url(#${clipId})">
-            <rect class="liquid-fill" x="58" y="302" width="124" height="0" rx="18" fill="url(#${liquidId})"/>
-            <ellipse class="liquid-surface" cx="120" cy="306" rx="58" ry="9" fill="#d7fcff" opacity=".18"/>
+            <rect class="liquid-fill" x="55" y="302" width="130" height="0" rx="20" fill="url(#${liquidId})"/>
+            <ellipse class="liquid-surface" cx="120" cy="306" rx="60" ry="9.5" fill="#e0ffff" opacity=".18"/>
+            <path class="liquid-wave" d="M60 306 C82 298 101 314 122 306 C143 298 160 314 184 306" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity=".5"/>
+            <path class="liquid-wave" d="M64 317 C91 309 106 324 130 316 C151 309 162 323 180 316" fill="none" stroke="#f4ffff" stroke-width="1.6" stroke-linecap="round" opacity=".28"/>
             <circle cx="89" cy="218" r="3.5" fill="#ffffff" opacity=".16"/>
             <circle cx="152" cy="254" r="4.3" fill="#ffffff" opacity=".2"/>
             <circle cx="142" cy="189" r="2.8" fill="#ffffff" opacity=".12"/>
           </g>
 
-          <path d="M46 137 C46 112 66 96 92 90 L96 72 L144 72 L148 90 C174 96 194 112 194 137 L194 286 C194 314 176 326 145 326 L95 326 C64 326 46 314 46 286 Z"
-            fill="url(#${bodyId})" stroke="url(#${glassId})" stroke-width="9" stroke-linejoin="round" filter="url(#${glowId})"/>
-          <path d="M58 140 C58 121 72 108 96 103 L100 87 L140 87 L144 103 C168 108 182 121 182 140 L182 281 C182 300 168 311 143 312 L97 312 C72 311 58 300 58 281 Z"
+          <path d="M58 142 C58 121 75 108 98 103 L101 83 L139 83 L142 103 C165 108 182 121 182 142 L182 279 C182 300 168 312 143 314 L97 314 C72 312 58 300 58 279 Z"
             fill="none" stroke="#d8fbff" stroke-opacity=".35" stroke-width="3"/>
-          <path d="M63 306 C88 319 152 319 177 306" fill="none" stroke="#021a68" stroke-width="14" stroke-linecap="round" opacity=".72"/>
-          <path d="M70 301 C96 310 144 310 170 301" fill="none" stroke="#baf7ff" stroke-width="5" stroke-linecap="round" opacity=".45"/>
-          <path d="M151 111 C181 136 181 263 160 300" fill="none" stroke="url(#${shineId})" stroke-width="28" stroke-linecap="round" opacity=".9"/>
-          <path d="M73 137 C65 181 65 247 74 292" fill="none" stroke="#78eaff" stroke-width="5" stroke-linecap="round" opacity=".5"/>
-          <path d="M181 139 C190 190 190 249 181 292" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity=".22"/>
-          <path d="M68 130 C78 104 98 98 111 96" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" opacity=".12"/>
+          <path d="M64 306 C89 320 151 320 176 306" fill="none" stroke="#020d48" stroke-width="14" stroke-linecap="round" opacity=".76"/>
+          <path d="M70 301 C96 311 144 311 170 301" fill="none" stroke="#c9fbff" stroke-width="5" stroke-linecap="round" opacity=".48"/>
+          <path d="M158 112 C185 138 181 263 160 301" fill="none" stroke="url(#${shineId})" stroke-width="30" stroke-linecap="round" opacity=".92"/>
+          <path d="M78 136 C67 179 67 248 78 292" fill="none" stroke="#79efff" stroke-width="5.5" stroke-linecap="round" opacity=".72"/>
+          <path d="M184 143 C192 194 190 250 181 292" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity=".25"/>
+          <path d="M70 132 C80 108 99 101 113 99" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" opacity=".14"/>
         </svg>
       `;
     }
@@ -1049,6 +1299,10 @@
       });
       const total = state.amounts.reduce((sum, value) => sum + value, 0);
       totalEl.textContent = `${total} / ${target}L`;
+      lakeTotalEl.textContent = total;
+      lakeHintEl.textContent = total === target
+        ? `已完成 ${target}L，挑战成功！`
+        : `已完成 ${total}L，还差 ${Math.max(target - total, 0)}L 即可成功`;
       totalEl.classList.toggle("win", total === target);
       document.querySelector(".status").style.setProperty("--progress", `${Math.min(total / target, 1) * 100}%`);
       stepsEl.textContent = `步数：${state.steps}`;
