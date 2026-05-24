@@ -234,8 +234,6 @@
     .bucket.selected::after { transform: translateY(22px) scale(.88); opacity: .38; }
     .bucket.tilting-left .bottle-wrap { animation: tiltLeft 1.45s cubic-bezier(.18, .82, .24, 1) forwards; }
     .bucket.tilting-right .bottle-wrap { animation: tiltRight 1.45s cubic-bezier(.18, .82, .24, 1) forwards; }
-    .bucket.tilting-left .liquid-layer { animation: pourSloshLeft 1.45s ease-in-out; }
-    .bucket.tilting-right .liquid-layer { animation: pourSloshRight 1.45s ease-in-out; }
     .bucket.receiving .liquid-layer { animation: slosh 1.05s ease-in-out; }
     .bucket.receiving .bottle-svg { filter: drop-shadow(0 18px 22px rgba(0,0,0,.34)) drop-shadow(0 0 18px rgba(142, 234, 255, .28)); }
 
@@ -923,11 +921,10 @@
       nextAmounts[index] = 0;
       animatePour(index, "lake");
       setMessage(`${capacities[index]}L 桶倒回湖里 ${poured}L。`);
-      state.selected = null;
       scheduleLiquidUpdate(() => {
         state.amounts = nextAmounts;
         state.steps += 1;
-      });
+      }, null);
     }
 
     function fillFromLake() {
@@ -950,11 +947,10 @@
       nextAmounts[index] = capacities[index];
       animateLakeFill(index);
       setMessage(`从湖里装满 ${capacities[index]}L 桶，加入 ${need}L。`);
-      state.selected = null;
       scheduleLiquidUpdate(() => {
         state.amounts = nextAmounts;
         state.steps += 1;
-      });
+      }, null);
     }
 
     function pourToBucket(from, to) {
@@ -980,11 +976,10 @@
       nextAmounts[to] += moved;
       animatePour(from, to);
       setMessage(`${capacities[from]}L 桶向 ${capacities[to]}L 桶倒入 ${moved}L。`);
-      state.selected = null;
       scheduleLiquidUpdate(() => {
         state.amounts = nextAmounts;
         state.steps += 1;
-      });
+      }, null);
     }
 
     function saveHistory() {
@@ -1001,7 +996,7 @@
       window.setTimeout(checkWin, 1560);
     }
 
-    function scheduleLiquidUpdate(applyUpdate) {
+    function scheduleLiquidUpdate(applyUpdate, finalSelected) {
       state.isAnimating = true;
       dumpBtn.disabled = true;
       render();
@@ -1013,6 +1008,7 @@
         cleanupBottleMotion();
         state.isAnimating = false;
         state.animationTimers = [];
+        state.selected = finalSelected;
         render();
         checkWin();
       }, pourAnimationDuration);
