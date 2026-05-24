@@ -130,7 +130,7 @@
       position: relative;
       align-self: stretch;
       border: 1px solid rgba(120, 232, 255, .38);
-      border-radius: 20px 20px 48% 48% / 14px 14px 44% 44%;
+      border-radius: 18px 18px 46% 46% / 14px 14px 38% 38%;
       overflow: hidden;
       cursor: pointer;
       box-shadow:
@@ -139,7 +139,8 @@
         0 24px 48px rgba(0,0,0,.2),
         0 0 42px rgba(23, 188, 255, .13);
       background:
-        radial-gradient(ellipse at 32% 20%, rgba(255,255,255,.36), transparent 18%),
+        radial-gradient(ellipse at 23% 8%, rgba(255,255,255,.42), transparent 15%),
+        radial-gradient(ellipse at 76% 34%, rgba(137,235,255,.28), transparent 16%),
         radial-gradient(ellipse at 50% 110%, rgba(255,255,255,.36), transparent 18%),
         linear-gradient(180deg, rgba(71, 215, 255, .82), rgba(14, 119, 202, .83) 52%, rgba(4, 31, 91, .96));
     }
@@ -188,9 +189,12 @@
     .bucket {
       --level: 0%;
       --fill: #28caff;
+      --bucket-scale: 1;
+      --bottle-width: 180px;
+      --bottle-height: 360px;
       position: relative;
-      width: clamp(104px, 20vw, 168px);
-      height: clamp(310px, 48vh, 445px);
+      width: clamp(112px, 21vw, 205px);
+      height: clamp(300px, 48vh, 444px);
       border: 0;
       background: transparent;
       padding: 0;
@@ -223,108 +227,50 @@
     .bucket.selected::after { transform: translateY(22px) scale(.88); opacity: .38; }
     .bucket.tilting-left .bottle-wrap { animation: tiltLeft 1.18s cubic-bezier(.2, .8, .2, 1); }
     .bucket.tilting-right .bottle-wrap { animation: tiltRight 1.18s cubic-bezier(.2, .8, .2, 1); }
-    .bucket.tilting-left .liquid { animation: pourSloshLeft 1.18s ease-in-out; }
-    .bucket.tilting-right .liquid { animation: pourSloshRight 1.18s ease-in-out; }
-    .bucket.receiving .liquid { animation: slosh 1.05s ease-in-out; }
+    .bucket.tilting-left .liquid-layer { animation: pourSloshLeft 1.18s ease-in-out; }
+    .bucket.tilting-right .liquid-layer { animation: pourSloshRight 1.18s ease-in-out; }
+    .bucket.receiving .liquid-layer { animation: slosh 1.05s ease-in-out; }
+    .bucket.receiving .bottle-svg { filter: drop-shadow(0 18px 22px rgba(0,0,0,.34)) drop-shadow(0 0 18px rgba(142, 234, 255, .28)); }
 
     .bottle-wrap {
       position: absolute;
-      inset: 0;
+      left: 50%;
+      bottom: 34px;
+      width: var(--bottle-width);
+      height: var(--bottle-height);
+      transform: translateX(-50%);
       transform-origin: 50% 17%;
     }
 
-    .liquid-zone {
-      position: absolute;
-      left: 18%;
-      right: 18%;
-      bottom: 8%;
-      height: 78%;
-      overflow: hidden;
-      border-radius: 32% 32% 18% 18% / 11% 11% 8% 8%;
-      filter: saturate(1.2);
+    .bottle-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      overflow: visible;
+      filter: drop-shadow(0 18px 22px rgba(0,0,0,.34));
+      pointer-events: none;
     }
 
-    .liquid {
-      position: absolute;
-      left: -12%;
-      right: -12%;
-      bottom: 0;
-      height: var(--level);
-      min-height: 0;
-      background:
-        radial-gradient(circle at 70% 18%, rgba(255,255,255,.48), transparent 11%),
-        radial-gradient(circle at 48% 62%, rgba(255,255,255,.18), transparent 7%),
-        linear-gradient(90deg, rgba(255,255,255,.22), transparent 22% 72%, rgba(0,0,0,.15)),
-        linear-gradient(180deg, color-mix(in srgb, var(--fill), white 24%), var(--fill));
-      border-radius: 45% 45% 9% 9% / 9% 9% 4% 4%;
-      transition: height .72s cubic-bezier(.19, 1, .22, 1);
-      transition-delay: 0s;
-      box-shadow: inset 0 14px 20px rgba(255,255,255,.22), inset 0 -18px 18px rgba(0,0,0,.14);
+    .liquid-layer {
+      transform-origin: 120px 302px;
+      filter: saturate(1.12);
     }
 
-    .bucket.tilting-left .liquid,
-    .bucket.tilting-right .liquid,
-    .bucket.receiving .liquid {
+    .liquid-fill,
+    .liquid-surface {
+      transition: y .72s cubic-bezier(.19, 1, .22, 1),
+        height .72s cubic-bezier(.19, 1, .22, 1),
+        cy .72s cubic-bezier(.19, 1, .22, 1);
+    }
+
+    .bucket.tilting-left .liquid-fill,
+    .bucket.tilting-left .liquid-surface,
+    .bucket.tilting-right .liquid-fill,
+    .bucket.tilting-right .liquid-surface,
+    .bucket.receiving .liquid-fill,
+    .bucket.receiving .liquid-surface {
       transition-delay: .24s;
       transition-duration: .86s;
-    }
-
-    .liquid::before {
-      content: "";
-      position: absolute;
-      left: -16%;
-      right: -16%;
-      top: -9px;
-      height: 22px;
-      border-radius: 50%;
-      background: rgba(255,255,255,.28);
-      animation: bob 2.2s ease-in-out infinite;
-    }
-
-    .bottle-art {
-      position: absolute;
-      inset: 0;
-      background: url("assets/bottle.png") center / contain no-repeat;
-      filter: drop-shadow(0 16px 18px rgba(0,0,0,.35));
-      pointer-events: none;
-    }
-
-    .bottle-shine {
-      position: absolute;
-      inset: 4% 12% 3%;
-      border-radius: 28px 28px 22px 22px;
-      border: 3px solid rgba(83, 215, 255, .62);
-      box-shadow:
-        inset 7px 0 0 rgba(23, 113, 203, .32),
-        inset -5px 0 0 rgba(255,255,255,.28),
-        0 0 0 2px rgba(4, 30, 86, .28);
-      mask-image: linear-gradient(180deg, transparent 0 12%, #000 14% 100%);
-      pointer-events: none;
-    }
-
-    .bottle-shine::after {
-      content: "";
-      position: absolute;
-      right: 15%;
-      top: 18%;
-      width: 17%;
-      height: 45%;
-      border-radius: 999px;
-      background: linear-gradient(180deg, rgba(255,255,255,.46), transparent 78%);
-      opacity: .42;
-      transform: skewX(-6deg);
-    }
-
-    .cap {
-      position: absolute;
-      top: 2.2%;
-      left: 37%;
-      width: 26%;
-      height: 7%;
-      border-radius: 999px;
-      background: linear-gradient(180deg, #ffe783, #f39d1f 62%, #9f5a12);
-      box-shadow: inset 0 3px 0 rgba(255,255,255,.7), 0 3px 8px rgba(0,0,0,.35);
-      pointer-events: none;
     }
 
     .bucket-info {
@@ -418,6 +364,7 @@
     }
 
     .status {
+      --progress: 0%;
       position: relative;
       z-index: 3;
       display: grid;
@@ -440,6 +387,26 @@
       min-height: 24px;
       color: var(--muted);
       font-weight: 700;
+    }
+
+    .target-meter {
+      margin-top: 9px;
+      width: min(390px, 100%);
+      height: 8px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255,255,255,.12);
+      box-shadow: inset 0 1px 3px rgba(0,0,0,.28);
+    }
+
+    .target-meter span {
+      display: block;
+      width: var(--progress);
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #36d7ff, #ffe86a 82%, #ffffff);
+      box-shadow: 0 0 18px rgba(255, 211, 79, .28);
+      transition: width .72s cubic-bezier(.19, 1, .22, 1);
     }
 
     .win {
@@ -624,10 +591,21 @@
         align-items: stretch;
       }
       .controls { justify-content: flex-start; }
-      .bottle-row { gap: 6px; }
+      .bottle-row {
+        display: block;
+        height: 420px;
+        overflow: hidden;
+      }
       .bucket {
-        width: min(29vw, 132px);
-        height: 342px;
+        position: absolute;
+        width: 112px;
+        height: 318px;
+      }
+      .bucket:nth-child(1) { left: 18px; }
+      .bucket:nth-child(2) { left: 136px; }
+      .bucket:nth-child(3) { left: 254px; }
+      .bottle-wrap {
+        bottom: 54px;
       }
       .status { grid-template-columns: 1fr; }
     }
@@ -657,6 +635,7 @@
     <section class="status">
       <div>
         <div class="message" id="message">点击水桶选中；点湖水装满，点其他水桶倒入，点“倒回湖里”清空选中的水桶。</div>
+        <div class="target-meter" aria-hidden="true"><span></span></div>
         <div id="steps">步数：0</div>
       </div>
       <div class="total" id="total">0 / 148L</div>
@@ -714,12 +693,10 @@
       button.type = "button";
       button.dataset.index = index;
       button.style.setProperty("--fill", colors[index]);
+      setBottleSize(button, capacity);
       button.innerHTML = `
         <div class="bottle-wrap">
-          <div class="liquid-zone"><div class="liquid"></div></div>
-          <div class="bottle-art"></div>
-          <div class="bottle-shine"></div>
-          <div class="cap"></div>
+          ${bottleSvg(index)}
         </div>
         <div class="bucket-info">
           <div class="amount">0L</div>
@@ -730,6 +707,20 @@
       row.appendChild(button);
       return button;
     });
+
+    window.addEventListener("resize", () => {
+      bucketEls.forEach((button, index) => setBottleSize(button, capacities[index]));
+    });
+
+    function setBottleSize(button, capacity) {
+      const isMobile = window.matchMedia("(max-width: 680px)").matches;
+      const scale = Math.sqrt(capacity / Math.max(...capacities));
+      const baseWidth = isMobile ? 112 : 205;
+      const baseHeight = isMobile ? 224 : 410;
+      button.style.setProperty("--bucket-scale", String(scale));
+      button.style.setProperty("--bottle-width", `${Math.round(baseWidth * scale)}px`);
+      button.style.setProperty("--bottle-height", `${Math.round(baseHeight * scale)}px`);
+    }
 
     function bottleSvg(index) {
       const clipId = `bottleClip${index}`;
@@ -764,7 +755,7 @@
               <stop offset="38%" stop-color="#183b87" stop-opacity=".11"/>
               <stop offset="74%" stop-color="#020929" stop-opacity=".3"/>
               <stop offset="100%" stop-color="#02061b" stop-opacity=".55"/>
-            </linearGradient>
+            </radialGradient>
             <linearGradient id="${rimId}" x1="0%" y1="0%" x2="0%" y2="100%">
               <stop offset="0%" stop-color="#e9fdff"/>
               <stop offset="28%" stop-color="#6bdfff"/>
@@ -799,7 +790,7 @@
           <ellipse cx="120" cy="76" rx="36" ry="19" fill="url(#${glassId})" opacity=".82"/>
           <ellipse cx="120" cy="74" rx="24" ry="8.5" fill="#071846" opacity=".74"/>
 
-          <g clip-path="url(#${clipId})">
+          <g class="liquid-layer" clip-path="url(#${clipId})">
             <rect class="liquid-fill" x="39" y="300" width="162" height="0" fill="url(#${liquidId})"/>
             <ellipse class="liquid-surface" cx="120" cy="300" rx="74" ry="11" fill="#d7fcff" opacity=".78"/>
             <circle cx="89" cy="218" r="3.5" fill="#ffffff" opacity=".16"/>
@@ -976,15 +967,25 @@
     function render() {
       bucketEls.forEach((el, index) => {
         const amount = state.amounts[index];
-        const level = `${(amount / capacities[index]) * 100}%`;
-        el.style.setProperty("--level", level);
+        const ratio = amount / capacities[index];
+        const liquidHeight = ratio * 206;
+        const liquidY = 300 - liquidHeight;
+        const surfaceY = ratio === 0 ? 304 : liquidY;
+        el.style.setProperty("--level", `${ratio * 100}%`);
         el.classList.toggle("selected", state.selected === index);
+        const fill = el.querySelector(".liquid-fill");
+        const surface = el.querySelector(".liquid-surface");
+        fill.style.y = `${liquidY}px`;
+        fill.style.height = `${liquidHeight}px`;
+        surface.style.cy = `${surfaceY}px`;
+        surface.style.opacity = amount === 0 ? ".18" : ".78";
         el.querySelector(".amount").textContent = `${amount}L`;
         el.setAttribute("aria-label", `${capacities[index]}升水桶，当前${amount}升`);
       });
       const total = state.amounts.reduce((sum, value) => sum + value, 0);
       totalEl.textContent = `${total} / ${target}L`;
       totalEl.classList.toggle("win", total === target);
+      document.querySelector(".status").style.setProperty("--progress", `${Math.min(total / target, 1) * 100}%`);
       stepsEl.textContent = `步数：${state.steps}`;
       dumpBtn.disabled = state.selected === null || state.amounts[state.selected] === 0;
     }
