@@ -854,7 +854,7 @@
   <script src="https://pixijs.download/release/pixi.min.js"></script>
   <script>
     const capacities = [38, 39, 75];
-    const colors = ["#58d42f", "#ff8f22", "#24c7ff"];
+    const colors = ["#0fa84d", "#e6002d", "#7a36ff"];
     const target = 148;
     const state = {
       amounts: [0, 0, 0],
@@ -1367,11 +1367,13 @@
           liquidBody.bezierCurveTo(71, 315, 55, 302, 55, 278);
           liquidBody.lineTo(bounds.left, waveY(bounds.left, topY, liquidState.time, amplitude, wobble));
           liquidBody.closePath();
-          liquidBody.fill({ color: mixHexColor(baseColor, "#ffffff", .18), alpha: .9 });
+          liquidBody.fill({ color: mixHexColor(baseColor, "#ffffff", .08), alpha: .98 });
+          liquidBody.roundRect(68, Math.max(topY + 12, 118), 104, Math.max(0, 292 - topY), 24)
+            .fill({ color: mixHexColor(baseColor, "#ffffff", .16), alpha: .2 });
 
           depthTint.roundRect(58, Math.max(topY + 18, 112), 124, Math.max(0, 298 - topY), 28)
-            .fill({ color: darkColor, alpha: .1 });
-          depthTint.ellipse(120, 303, 58, 14).fill({ color: 0x001c54, alpha: .12 });
+            .fill({ color: darkColor, alpha: .04 });
+          depthTint.ellipse(120, 303, 58, 14).fill({ color: 0x001c54, alpha: .06 });
 
           const surfaceRx = ratio > .86 ? 40 : 58 - ratio * 8;
           surface.ellipse(120 + wobble * .35, topY + wobble * .08, surfaceRx, 8 + amplitude * .18)
