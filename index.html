@@ -331,6 +331,22 @@
       transform-origin: 50% 17%;
     }
 
+    .liquid-pixi {
+      position: absolute;
+      inset: 0;
+      z-index: 8;
+      pointer-events: none;
+      overflow: visible;
+      opacity: .94;
+    }
+
+    .liquid-pixi canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      filter: saturate(1.18) drop-shadow(0 0 14px color-mix(in srgb, var(--fill), #ffffff 46%));
+    }
+
     .bucket-base {
       position: absolute;
       left: 50%;
@@ -354,9 +370,15 @@
       width: 100%;
       height: 100%;
       display: block;
+      position: relative;
+      z-index: 2;
       overflow: visible;
       filter: drop-shadow(0 18px 22px rgba(0,0,0,.34));
       pointer-events: none;
+    }
+
+    .pixi-liquid-ready .liquid-layer {
+      opacity: 0;
     }
 
     .liquid-layer {
@@ -424,6 +446,20 @@
       z-index: 10;
       pointer-events: none;
       overflow: visible;
+    }
+
+    .pour-pixi {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .pour-pixi canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
     }
 
     .pour-path {
@@ -845,6 +881,7 @@
     const winText = document.getElementById("winText");
     const playAgainBtn = document.getElementById("playAgainBtn");
     let lakePixi = null;
+    const liquidRenderers = [];
     const solutionHints = [
       "推荐路径 1/9：装满 75L 桶。",
       "推荐路径 2/9：75L 桶倒入 38L 桶，75L 桶剩 37L。",
@@ -869,6 +906,7 @@
       button.innerHTML = `
         <div class="bottle-wrap">
           ${bottleSvg(index)}
+          <div class="liquid-pixi" data-liquid-index="${index}" aria-hidden="true"></div>
         </div>
         <div class="bucket-base"></div>
         <div class="bucket-info">
@@ -1191,6 +1229,204 @@
       });
     }
 
+    function hexToRgb(hex) {
+      const clean = hex.replace("#", "");
+      const value = Number.parseInt(clean.length === 3
+        ? clean.split("").map((part) => part + part).join("")
+        : clean, 16);
+      return {
+        r: (value >> 16) & 255,
+        g: (value >> 8) & 255,
+        b: value & 255
+      };
+    }
+
+    function mixHexColor(hex, targetHex, amount) {
+      const source = hexToRgb(hex);
+      const targetRgb = hexToRgb(targetHex);
+      const mix = (a, b) => Math.round(a + (b - a) * amount);
+      return (mix(source.r, targetRgb.r) << 16)
+        + (mix(source.g, targetRgb.g) << 8)
+        + mix(source.b, targetRgb.b);
+    }
+
+    function liquidBoundsAt(y) {
+      if (y < 77) return { left: 100, right: 140 };
+      if (y < 101) return { left: 99, right: 141 };
+      if (y < 142) {
+        const t = Math.max(0, Math.min(1, (y - 101) / 41));
+        const eased = t * t * (3 - 2 * t);
+        return {
+          left: 96 + (55 - 96) * eased,
+          right: 144 + (185 - 144) * eased
+        };
+      }
+      if (y > 278) {
+        const t = Math.max(0, Math.min(1, (y - 278) / 40));
+        const eased = t * t * (3 - 2 * t);
+        return {
+          left: 55 + (96 - 55) * eased,
+          right: 185 + (144 - 185) * eased
+        };
+      }
+      return { left: 55, right: 185 };
+    }
+
+    async function initBottleLiquids() {
+      if (!window.PIXI) return;
+
+      const hosts = bucketEls.map((bucket) => bucket.querySelector(".liquid-pixi"));
+      await Promise.all(hosts.map(async (host, index) => {
+        if (!host) return;
+        const app = new PIXI.Application();
+        try {
+          await app.init({
+            resizeTo: host,
+            backgroundAlpha: 0,
+            antialias: true,
+            autoDensity: true,
+            resolution: Math.min(window.devicePixelRatio || 1, 2)
+          });
+        } catch (error) {
+          console.warn("PixiJS bottle liquid renderer failed to initialize.", error);
+          return;
+        }
+
+        host.appendChild(app.canvas);
+        bucketEls[index].classList.add("pixi-liquid-ready");
+
+        const liquidBody = new PIXI.Graphics();
+        const depthTint = new PIXI.Graphics();
+        const surface = new PIXI.Graphics();
+        const caustics = new PIXI.Graphics();
+        const bubbleLayer = new PIXI.Graphics();
+        const layer = new PIXI.Container();
+        layer.addChild(liquidBody, depthTint, caustics, surface, bubbleLayer);
+        app.stage.addChild(layer);
+
+        const baseColor = colors[index];
+        const brightColor = mixHexColor(baseColor, "#ffffff", .42);
+        const darkColor = mixHexColor(baseColor, "#001a48", .34);
+        const bubbles = Array.from({ length: 12 }, (_, bubbleIndex) => ({
+          x: 68 + Math.random() * 104,
+          y: 128 + Math.random() * 174,
+          r: 1.4 + Math.random() * 3.5,
+          speed: 10 + Math.random() * 18,
+          drift: Math.random() * Math.PI * 2,
+          delay: bubbleIndex * .41
+        }));
+        const liquidState = {
+          ratio: 0,
+          targetRatio: 0,
+          amplitude: 0,
+          direction: 1,
+          time: Math.random() * 10
+        };
+
+        function waveY(x, topY, time, amplitude, wobble) {
+          return topY
+            + Math.sin(x / 17 + time * 2.2) * amplitude
+            + Math.sin(x / 34 - time * 1.35) * amplitude * .55
+            + wobble;
+        }
+
+        function drawLiquid(delta) {
+          const width = app.renderer.width;
+          const height = app.renderer.height;
+          if (width < 2 || height < 2) return;
+
+          layer.scale.set(width / 240, height / 360);
+          liquidState.time += delta / 60;
+          liquidState.ratio += (liquidState.targetRatio - liquidState.ratio) * .075;
+          liquidState.amplitude *= .965;
+
+          const ratio = Math.max(0, Math.min(1, liquidState.ratio));
+          const topY = 302 - ratio * 198;
+          const bounds = liquidBoundsAt(topY);
+          const amplitude = ratio > .01 ? 1.5 + ratio * 3.2 + liquidState.amplitude * 12 : 0;
+          const wobble = Math.sin(liquidState.time * 7.6) * liquidState.amplitude * 9 * liquidState.direction;
+          const samples = 18;
+
+          liquidBody.clear();
+          depthTint.clear();
+          surface.clear();
+          caustics.clear();
+          bubbleLayer.clear();
+
+          if (ratio < .004) return;
+
+          liquidBody.moveTo(bounds.left, waveY(bounds.left, topY, liquidState.time, amplitude, wobble));
+          for (let i = 1; i <= samples; i += 1) {
+            const p = i / samples;
+            const x = bounds.left + (bounds.right - bounds.left) * p;
+            liquidBody.lineTo(x, waveY(x, topY, liquidState.time, amplitude, wobble));
+          }
+          liquidBody.lineTo(185, 278);
+          liquidBody.bezierCurveTo(185, 302, 169, 315, 144, 318);
+          liquidBody.lineTo(96, 318);
+          liquidBody.bezierCurveTo(71, 315, 55, 302, 55, 278);
+          liquidBody.lineTo(bounds.left, waveY(bounds.left, topY, liquidState.time, amplitude, wobble));
+          liquidBody.closePath();
+          liquidBody.fill({ color: mixHexColor(baseColor, "#ffffff", .18), alpha: .9 });
+
+          depthTint.roundRect(58, Math.max(topY + 18, 112), 124, Math.max(0, 298 - topY), 28)
+            .fill({ color: darkColor, alpha: .1 });
+          depthTint.ellipse(120, 303, 58, 14).fill({ color: 0x001c54, alpha: .12 });
+
+          const surfaceRx = ratio > .86 ? 40 : 58 - ratio * 8;
+          surface.ellipse(120 + wobble * .35, topY + wobble * .08, surfaceRx, 8 + amplitude * .18)
+            .fill({ color: 0xdffcff, alpha: .42 });
+          surface.ellipse(120 - 10 + wobble * .22, topY - 1.2, surfaceRx * .72, 3.4)
+            .fill({ color: 0xffffff, alpha: .24 });
+          surface.ellipse(95 + wobble * .2, topY + Math.max(20, (302 - topY) * .28), 18, Math.max(18, (302 - topY) * .28))
+            .fill({ color: brightColor, alpha: .16 });
+
+          caustics.moveTo(bounds.left + 8, topY + 14 + wobble * .16);
+          for (let i = 1; i <= samples; i += 1) {
+            const p = i / samples;
+            const x = bounds.left + 8 + (bounds.right - bounds.left - 16) * p;
+            const y = topY + 14 + Math.sin(p * Math.PI * 3 + liquidState.time * 2.8) * (2.5 + liquidState.amplitude * 7);
+            caustics.lineTo(x, y);
+          }
+          caustics.stroke({ width: 2.4, color: 0xffffff, alpha: .24, cap: "round", join: "round" });
+
+          bubbles.forEach((bubble) => {
+            const travel = ((liquidState.time * bubble.speed + bubble.delay * 35) % 188);
+            const y = 306 - travel;
+            if (y <= topY + 8 || y > 310) return;
+            const boundsAtBubble = liquidBoundsAt(y);
+            const x = Math.max(boundsAtBubble.left + 8, Math.min(boundsAtBubble.right - 8,
+              bubble.x + Math.sin(liquidState.time * 1.6 + bubble.drift) * 6));
+            const alpha = Math.max(0, Math.min(.3, (y - topY) / 80));
+            bubbleLayer.circle(x, y, bubble.r).stroke({ width: 1.1, color: 0xcffbff, alpha });
+            bubbleLayer.circle(x - bubble.r * .24, y - bubble.r * .28, Math.max(.55, bubble.r * .22))
+              .fill({ color: 0xffffff, alpha: alpha * .85 });
+          });
+        }
+
+        app.ticker.add(drawLiquid);
+        liquidRenderers[index] = {
+          setLevel(ratio) {
+            const nextRatio = Math.max(0, Math.min(1, ratio));
+            const delta = nextRatio - liquidState.targetRatio;
+            if (Math.abs(delta) > .002) {
+              liquidState.direction = delta >= 0 ? -1 : 1;
+              liquidState.amplitude = Math.min(.78, liquidState.amplitude + Math.abs(delta) * 1.6 + .12);
+            }
+            liquidState.targetRatio = nextRatio;
+          },
+          disturb(direction = 1, strength = .34) {
+            liquidState.direction = direction;
+            liquidState.amplitude = Math.min(.92, liquidState.amplitude + strength);
+          },
+          destroy() {
+            app.destroy(true);
+          }
+        };
+        liquidRenderers[index].setLevel(state.amounts[index] / capacities[index]);
+      }));
+    }
+
     async function initLakePixi() {
       if (!window.PIXI || !lakePixiHost) return;
 
@@ -1318,9 +1554,10 @@
         const surfaceY = amount === 0 ? 306 : liquidY;
         const surfaceRadius = ratio > .82 ? 42 : 58;
         el.style.setProperty("--level", `${ratio * 100}%`);
-        el.classList.toggle("selected", state.selected === index);
-        const fill = el.querySelector(".liquid-fill");
-        const surface = el.querySelector(".liquid-surface");
+      el.classList.toggle("selected", state.selected === index);
+      if (liquidRenderers[index]) liquidRenderers[index].setLevel(ratio);
+      const fill = el.querySelector(".liquid-fill");
+      const surface = el.querySelector(".liquid-surface");
         fill.setAttribute("y", liquidY.toFixed(2));
         fill.setAttribute("height", liquidHeight.toFixed(2));
         surface.setAttribute("cy", surfaceY.toFixed(2));
@@ -1460,12 +1697,167 @@
       el.classList.remove("tilting-left", "tilting-right", "receiving", className);
       void el.offsetWidth;
       el.classList.add(className);
+      if (liquidRenderers[index]) {
+        const direction = className === "tilting-left" ? -1 : 1;
+        const strength = className === "receiving" ? .5 : .74;
+        liquidRenderers[index].disturb(direction, strength);
+      }
       window.setTimeout(() => {
         el.classList.remove("tilting-left", "tilting-right", "receiving", className);
       }, 1520);
     }
 
     function addStream(x1, y1, x2, y2, options = {}) {
+      if (window.PIXI) {
+        addPixiStream(x1, y1, x2, y2, options);
+        return;
+      }
+      addSvgStream(x1, y1, x2, y2, options);
+    }
+
+    async function addPixiStream(x1, y1, x2, y2, options = {}) {
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const distance = Math.hypot(dx, dy);
+      const bend = options.arc ?? (dx > 0 ? -70 : 70);
+      const cx = (x1 + x2) / 2 + bend;
+      const cy = Math.min(y1, y2) - Math.max(44, distance * .18);
+      const layer = document.createElement("div");
+      layer.className = "pour-pixi";
+      document.body.appendChild(layer);
+
+      const app = new PIXI.Application();
+      try {
+        await app.init({
+          width: window.innerWidth,
+          height: window.innerHeight,
+          backgroundAlpha: 0,
+          antialias: true,
+          autoDensity: true,
+          resolution: Math.min(window.devicePixelRatio || 1, 2)
+        });
+      } catch (error) {
+        layer.remove();
+        console.warn("PixiJS pour stream failed to initialize.", error);
+        addSvgStream(x1, y1, x2, y2, options);
+        return;
+      }
+
+      layer.appendChild(app.canvas);
+      const stream = new PIXI.Graphics();
+      const drops = new PIXI.Graphics();
+      const splash = new PIXI.Graphics();
+      app.stage.addChild(stream, drops, splash);
+
+      const start = performance.now();
+      const duration = 1560;
+      const particles = Array.from({ length: 24 }, (_, index) => ({
+        delay: 120 + index * 42 + Math.random() * 48,
+        duration: 720 + Math.random() * 260,
+        size: 2.2 + Math.random() * 3.2,
+        lane: (Math.random() - .5) * 12,
+        alpha: .46 + Math.random() * .38
+      }));
+      const splashDrops = Array.from({ length: 18 }, (_, index) => ({
+        angle: (-150 + index * 17 + Math.random() * 8) * Math.PI / 180,
+        speed: 42 + Math.random() * 52,
+        size: 1.7 + Math.random() * 2.7,
+        delay: Math.random() * 120
+      }));
+
+      const pointAt = (t) => {
+        const inv = 1 - t;
+        return {
+          x: inv * inv * x1 + 2 * inv * t * cx + t * t * x2,
+          y: inv * inv * y1 + 2 * inv * t * cy + t * t * y2
+        };
+      };
+      const tangentAt = (t) => {
+        const tx = 2 * (1 - t) * (cx - x1) + 2 * t * (x2 - cx);
+        const ty = 2 * (1 - t) * (cy - y1) + 2 * t * (y2 - cy);
+        const len = Math.hypot(tx, ty) || 1;
+        return { x: tx / len, y: ty / len };
+      };
+
+      function drawPartialPath(graphics, from, to, width, color, alpha, offset = 0) {
+        const steps = 34;
+        const first = pointAt(from);
+        const firstTan = tangentAt(from);
+        graphics.moveTo(first.x - firstTan.y * offset, first.y + firstTan.x * offset);
+        for (let i = 1; i <= steps; i += 1) {
+          const t = from + (to - from) * (i / steps);
+          const point = pointAt(t);
+          const tan = tangentAt(t);
+          const wave = Math.sin((t * 38) + performance.now() / 90) * 1.7;
+          graphics.lineTo(point.x - tan.y * (offset + wave), point.y + tan.x * (offset + wave));
+        }
+        graphics.stroke({ width, color, alpha, cap: "round", join: "round" });
+      }
+
+      function drawPixiPour() {
+        const elapsed = performance.now() - start;
+        const p = Math.min(elapsed / duration, 1);
+        stream.clear();
+        drops.clear();
+        splash.clear();
+
+        const head = p < .18 ? p / .18 : 1;
+        const tail = p > .76 ? (p - .76) / .24 : 0;
+        if (head > tail) {
+          const streamAlpha = p < .12 ? p / .12 : p > .78 ? (1 - p) / .22 : 1;
+          drawPartialPath(stream, tail, head, 14, 0x8feaff, .5 * streamAlpha, 0);
+          drawPartialPath(stream, tail, head, 7, 0xeaffff, .78 * streamAlpha, dx > 0 ? -4 : 4);
+          drawPartialPath(stream, Math.max(tail, .03), head, 3, 0xffffff, .52 * streamAlpha, dx > 0 ? 5 : -5);
+        }
+
+        particles.forEach((particle) => {
+          const local = (elapsed - particle.delay) / particle.duration;
+          if (local <= 0 || local >= 1) return;
+          const eased = local * local * (3 - 2 * local);
+          const point = pointAt(eased);
+          const tan = tangentAt(eased);
+          const drift = Math.sin(local * Math.PI * 3 + particle.delay) * 3;
+          const x = point.x - tan.y * (particle.lane + drift);
+          const y = point.y + tan.x * (particle.lane + drift) + Math.sin(local * Math.PI) * 4;
+          const alpha = Math.sin(local * Math.PI) * particle.alpha;
+          drops.circle(x, y, particle.size).fill({ color: 0xdffcff, alpha });
+          drops.circle(x - particle.size * .25, y - particle.size * .3, particle.size * .32)
+            .fill({ color: 0xffffff, alpha: alpha * .75 });
+        });
+
+        if (options.splash) {
+          const splashAge = elapsed - duration * .48;
+          if (splashAge > 0) {
+            const ringT = Math.min(splashAge / 720, 1);
+            splash.circle(x2, y2, 9 + ringT * 32)
+              .stroke({ width: 2.6 * (1 - ringT), color: 0xdffcff, alpha: .55 * (1 - ringT) });
+            splash.ellipse(x2, y2 + 4, 22 + ringT * 44, 5 + ringT * 10)
+              .stroke({ width: 2, color: 0x7be8ff, alpha: .3 * (1 - ringT) });
+
+            splashDrops.forEach((drop) => {
+              const local = (splashAge - drop.delay) / 540;
+              if (local <= 0 || local >= 1) return;
+              const alpha = Math.sin(local * Math.PI) * .8;
+              const x = x2 + Math.cos(drop.angle) * drop.speed * local;
+              const y = y2 + Math.sin(drop.angle) * drop.speed * local + 60 * local * local;
+              splash.circle(x, y, drop.size * (1 - local * .28)).fill({ color: 0xcffbff, alpha });
+            });
+          }
+        }
+
+        if (p >= 1) {
+          app.ticker.remove(drawPixiPour);
+          window.setTimeout(() => {
+            app.destroy(true);
+            layer.remove();
+          }, 60);
+        }
+      }
+
+      app.ticker.add(drawPixiPour);
+    }
+
+    function addSvgStream(x1, y1, x2, y2, options = {}) {
       const dx = x2 - x1;
       const dy = y2 - y1;
       const distance = Math.hypot(dx, dy);
@@ -1522,6 +1914,7 @@
       window.setTimeout(() => splash.remove(), 900);
     }
 
+    initBottleLiquids();
     initLakePixi();
     render();
   </script>
