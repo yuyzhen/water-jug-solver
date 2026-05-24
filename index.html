@@ -662,6 +662,7 @@
       "推荐路径 9/9：最后装满 75L 桶，总量为 37 + 36 + 75 = 148L。"
     ];
     let hintIndex = 0;
+    let hintUnlocked = false;
 
     const bucketEls = capacities.map((capacity, index) => {
       const button = document.createElement("button");
@@ -786,6 +787,14 @@
 
     dumpBtn.addEventListener("click", dumpToLake);
     hintBtn.addEventListener("click", () => {
+      if (!hintUnlocked) {
+        const password = window.prompt("请输入提示密码");
+        if (password !== "148") {
+          setMessage("密码不对，暂时不能查看提示。");
+          return;
+        }
+        hintUnlocked = true;
+      }
       setMessage(solutionHints[hintIndex]);
       hintIndex = (hintIndex + 1) % solutionHints.length;
     });
