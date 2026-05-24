@@ -260,7 +260,8 @@
     .liquid-surface {
       transition: y .72s cubic-bezier(.19, 1, .22, 1),
         height .72s cubic-bezier(.19, 1, .22, 1),
-        cy .72s cubic-bezier(.19, 1, .22, 1);
+        cy .72s cubic-bezier(.19, 1, .22, 1),
+        rx .72s cubic-bezier(.19, 1, .22, 1);
     }
 
     .bucket.tilting-left .liquid-fill,
@@ -775,7 +776,7 @@
               <stop offset="100%" stop-color="white" stop-opacity="0"/>
             </linearGradient>
             <clipPath id="${clipId}">
-              <path d="M46 137 C46 112 66 96 92 90 L96 72 L144 72 L148 90 C174 96 194 112 194 137 L194 286 C194 314 176 326 145 326 L95 326 C64 326 46 314 46 286 Z"/>
+              <path d="M58 140 C58 121 72 108 96 103 L100 87 L140 87 L144 103 C168 108 182 121 182 140 L182 281 C182 300 168 311 143 312 L97 312 C72 311 58 300 58 281 Z"/>
             </clipPath>
           </defs>
 
@@ -791,8 +792,8 @@
           <ellipse cx="120" cy="74" rx="24" ry="8.5" fill="#071846" opacity=".74"/>
 
           <g class="liquid-layer" clip-path="url(#${clipId})">
-            <rect class="liquid-fill" x="39" y="300" width="162" height="0" fill="url(#${liquidId})"/>
-            <ellipse class="liquid-surface" cx="120" cy="300" rx="74" ry="11" fill="#d7fcff" opacity=".78"/>
+            <rect class="liquid-fill" x="58" y="302" width="124" height="0" rx="18" fill="url(#${liquidId})"/>
+            <ellipse class="liquid-surface" cx="120" cy="306" rx="58" ry="9" fill="#d7fcff" opacity=".18"/>
             <circle cx="89" cy="218" r="3.5" fill="#ffffff" opacity=".16"/>
             <circle cx="152" cy="254" r="4.3" fill="#ffffff" opacity=".2"/>
             <circle cx="142" cy="189" r="2.8" fill="#ffffff" opacity=".12"/>
@@ -968,17 +969,20 @@
       bucketEls.forEach((el, index) => {
         const amount = state.amounts[index];
         const ratio = amount / capacities[index];
-        const liquidHeight = ratio * 206;
-        const liquidY = 300 - liquidHeight;
-        const surfaceY = ratio === 0 ? 304 : liquidY;
+        const liquidBottom = 302;
+        const liquidHeight = ratio * 198;
+        const liquidY = liquidBottom - liquidHeight;
+        const surfaceY = amount === 0 ? 306 : liquidY;
+        const surfaceRadius = ratio > .82 ? 42 : 58;
         el.style.setProperty("--level", `${ratio * 100}%`);
         el.classList.toggle("selected", state.selected === index);
         const fill = el.querySelector(".liquid-fill");
         const surface = el.querySelector(".liquid-surface");
-        fill.style.y = `${liquidY}px`;
-        fill.style.height = `${liquidHeight}px`;
-        surface.style.cy = `${surfaceY}px`;
-        surface.style.opacity = amount === 0 ? ".18" : ".78";
+        fill.setAttribute("y", liquidY.toFixed(2));
+        fill.setAttribute("height", liquidHeight.toFixed(2));
+        surface.setAttribute("cy", surfaceY.toFixed(2));
+        surface.setAttribute("rx", String(surfaceRadius));
+        surface.setAttribute("opacity", amount === 0 ? ".18" : ".78");
         el.querySelector(".amount").textContent = `${amount}L`;
         el.setAttribute("aria-label", `${capacities[index]}升水桶，当前${amount}升`);
       });
