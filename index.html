@@ -232,10 +232,10 @@
       filter: none;
     }
     .bucket.selected::after { transform: translateY(22px) scale(.88); opacity: .38; }
-    .bucket.tilting-left .bottle-wrap { animation: tiltLeft 1.18s cubic-bezier(.2, .8, .2, 1); }
-    .bucket.tilting-right .bottle-wrap { animation: tiltRight 1.18s cubic-bezier(.2, .8, .2, 1); }
-    .bucket.tilting-left .liquid-layer { animation: pourSloshLeft 1.18s ease-in-out; }
-    .bucket.tilting-right .liquid-layer { animation: pourSloshRight 1.18s ease-in-out; }
+    .bucket.tilting-left .bottle-wrap { animation: tiltLeft 1.45s cubic-bezier(.18, .82, .24, 1) forwards; }
+    .bucket.tilting-right .bottle-wrap { animation: tiltRight 1.45s cubic-bezier(.18, .82, .24, 1) forwards; }
+    .bucket.tilting-left .liquid-layer { animation: pourSloshLeft 1.45s ease-in-out; }
+    .bucket.tilting-right .liquid-layer { animation: pourSloshRight 1.45s ease-in-out; }
     .bucket.receiving .liquid-layer { animation: slosh 1.05s ease-in-out; }
     .bucket.receiving .bottle-svg { filter: drop-shadow(0 18px 22px rgba(0,0,0,.34)) drop-shadow(0 0 18px rgba(142, 234, 255, .28)); }
 
@@ -321,7 +321,7 @@
       stroke-dasharray: var(--path-len);
       stroke-dashoffset: var(--path-len);
       filter: drop-shadow(0 0 12px rgba(57, 218, 255, .92));
-      animation: streamDraw 1.14s ease-in-out forwards;
+      animation: streamDraw 1.36s ease-in-out forwards;
     }
 
     .pour-path.thin {
@@ -335,7 +335,7 @@
       filter: drop-shadow(0 0 8px rgba(57, 218, 255, .75));
       offset-path: path(var(--drop-path));
       offset-distance: 0%;
-      animation: dropTravel .86s var(--delay) ease-in forwards;
+      animation: dropTravel 1.02s var(--delay) ease-in forwards;
     }
 
     .splash {
@@ -542,25 +542,27 @@
     }
 
     @keyframes pourSloshLeft {
-      0%, 100% { transform: translateX(0) skewX(0deg); border-radius: 45% 45% 9% 9% / 9% 9% 4% 4%; }
-      35%, 72% { transform: translateX(-10%) skewX(-18deg); border-radius: 18% 56% 9% 9% / 8% 15% 4% 4%; }
+      0%, 100% { transform: translateX(0) skewX(0deg); }
+      30%, 72% { transform: translateX(-7px) skewX(-12deg); }
     }
 
     @keyframes pourSloshRight {
-      0%, 100% { transform: translateX(0) skewX(0deg); border-radius: 45% 45% 9% 9% / 9% 9% 4% 4%; }
-      35%, 72% { transform: translateX(10%) skewX(18deg); border-radius: 56% 18% 9% 9% / 15% 8% 4% 4%; }
+      0%, 100% { transform: translateX(0) skewX(0deg); }
+      30%, 72% { transform: translateX(7px) skewX(12deg); }
     }
 
     @keyframes tiltLeft {
       0%, 100% { transform: rotate(0deg); }
-      25% { transform: rotate(-16deg) translate(-8px, -8px); }
-      45%, 76% { transform: rotate(-54deg) translate(-30px, -22px); }
+      18% { transform: rotate(-12deg) translate(-6px, -7px); }
+      36%, 68% { transform: rotate(-52deg) translate(-30px, -22px); }
+      86% { transform: rotate(-9deg) translate(-5px, -6px); }
     }
 
     @keyframes tiltRight {
       0%, 100% { transform: rotate(0deg); }
-      25% { transform: rotate(16deg) translate(8px, -8px); }
-      45%, 76% { transform: rotate(54deg) translate(30px, -22px); }
+      18% { transform: rotate(12deg) translate(6px, -7px); }
+      36%, 68% { transform: rotate(52deg) translate(30px, -22px); }
+      86% { transform: rotate(9deg) translate(5px, -6px); }
     }
 
     @keyframes streamDraw {
@@ -792,9 +794,8 @@
 
           <rect x="96" y="51" width="48" height="48" rx="9" fill="url(#${glassId})" opacity=".84"/>
           <path d="M98 56 L98 101 M142 56 L142 101" stroke="#7deaff" stroke-width="5" stroke-opacity=".22"/>
-          <ellipse cx="120" cy="51" rx="29" ry="8" fill="url(#${rimId})" opacity=".9"/>
-          <ellipse cx="120" cy="50" rx="21" ry="5.5" fill="#020a2c" opacity=".92"/>
-          <ellipse cx="120" cy="48" rx="18" ry="2.8" fill="#d9fdff" opacity=".28"/>
+          <ellipse cx="120" cy="50" rx="23" ry="6" fill="#071846" stroke="#75e8ff" stroke-width="3" opacity=".9"/>
+          <ellipse cx="120" cy="48.6" rx="15" ry="2.4" fill="#d9fdff" opacity=".26"/>
           <ellipse cx="120" cy="76" rx="36" ry="19" fill="url(#${glassId})" opacity=".82"/>
           <ellipse cx="120" cy="74" rx="24" ry="8.5" fill="#071846" opacity=".74"/>
 
@@ -969,7 +970,7 @@
 
     function renderSoon() {
       render();
-      window.setTimeout(checkWin, 1180);
+      window.setTimeout(checkWin, 1560);
     }
 
     function render() {
@@ -1112,10 +1113,12 @@
 
     function pulse(index, className) {
       const el = bucketEls[index];
-      el.classList.remove(className);
+      el.classList.remove("tilting-left", "tilting-right", "receiving", className);
       void el.offsetWidth;
       el.classList.add(className);
-      window.setTimeout(() => el.classList.remove(className), 1240);
+      window.setTimeout(() => {
+        el.classList.remove("tilting-left", "tilting-right", "receiving", className);
+      }, 1520);
     }
 
     function addStream(x1, y1, x2, y2, options = {}) {
@@ -1157,7 +1160,7 @@
       }
 
       if (options.splash) addSplash(x2, y2);
-      window.setTimeout(() => svg.remove(), 1320);
+      window.setTimeout(() => svg.remove(), 1560);
     }
 
     function addSplash(x, y) {
